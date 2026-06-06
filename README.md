@@ -73,6 +73,21 @@ Because all assets are relative paths (`./game.js`, `./styles.css`), no base-pat
 - Styling is in `styles.css`.
 - This setup replaces a Python simulator with browser-native JavaScript.
 
+## Milestone Changelog
+
+### 2026-06 Freight Ops Update
+
+- Reframed the simulator as a shortline freight railroad with monthly turns.
+- Added six branch/spur lines with shipper/receiver pairs and branch-specific infrastructure costs.
+- Added branch action groups (maintain, repair, abandon) with branch-level profitability and margin tracking.
+- Expanded Observe and Orient reporting with offered demand, moved carloads, unserved cars, and service rate.
+- Added customer viability states and economy-mixed customer failure behavior.
+- Added debt and covenant visibility: debt service next month, loan rate, covenant limit, and months-to-covenant runway.
+- Added jumbo loan controls (pay down principal, renegotiate to market rate).
+- Added monthly cost ledger for visible expenditures.
+- Added supplemental side-action: Squeeze the Turnip (stackable with primary action).
+- Added GNU LGPL v3 license and GitHub Pages-ready static deployment setup.
+
 ## License
 
 This project is licensed under the GNU Lesser General Public License, version 3 (LGPL-3.0).
