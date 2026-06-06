@@ -54,6 +54,8 @@ No build tools are required.
 - `Company Cost Ledger`: monthly expenditure breakout plus revenue and operating balance.
 - `Observe and Orient`: lane-level demand, moved cars, unserved cars, and service rate.
 - `Branch Infrastructure Ledger`: monthly group with branch sub-rows for status, revenue, cost, profit, and margin.
+- `Slush Fund Activities`: five progress tracks with allocation percentages and achievement unlocks.
+- Ledger tables are viewport-capped to keep horizontal scrollbars nearby, with in-panel vertical scrolling after 3 rows (or 3 month groups in branch ledger).
 
 ## GitHub Pages
 
@@ -73,13 +75,24 @@ Site URL format:
 
 Because all assets are relative paths (`./game.js`, `./styles.css`), no base-path rewrite is required.
 
-## Notes
+## Change History
 
-- The game uses native ES modules (`game.js` + `simEngine.js`).
-- Styling is in `styles.css`.
-- This setup replaces a Python simulator with browser-native JavaScript.
+### 2026-06 Slush Fund + UX Update
 
-## Milestone Changelog
+- Added configurable slush fund allocation across five project tracks, with totals required to equal `100`.
+- Added unlockable slush achievements with mini-party events and morale penalties at each funding threshold.
+- Added persistent slush progress cards and allocation controls in the main game panel.
+- Added clickable railroad renaming (random or custom) with in-game cost and log entries.
+- Standardized terminology around `Slush Fund` while preserving the `Squeeze the Turnip` joke where intended.
+- Capped ledger viewport height so each table shows at most 3 rows (or 3 branch month groups) before vertical scrolling.
+
+### 2026-06 Structure + Docs Refresh
+
+- Clarified split entry points: `index.html` (briefing/how-to) and `game.html` (playable simulator UI).
+- Clarified code ownership: core simulation in `simEngine.js`, UI rendering/wiring in `game.js`.
+- Documented slush-fund allocation rule (must total exactly `100`) and achievement tracks.
+- Documented staged track decay and post-maintenance grace behavior.
+- Confirmed static deployment model: no build toolchain, deploy from `main` root on GitHub Pages.
 
 ### 2026-06 Freight Ops Update
 

@@ -132,7 +132,7 @@ body {
 }
 
 .table-wrap {
-  overflow-x: auto;
+  overflow: auto;
 }
 
 .snapshot-table {

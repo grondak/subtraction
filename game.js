@@ -399,6 +399,55 @@ function renderLog(state) {
   logEl.innerHTML = state.log.map((entry) => `<li>${entry}</li>`).join("");
 }
 
+function capLedgerWrapByRows(tbodyEl, options = {}) {
+  const wrap = tbodyEl.closest(".table-wrap");
+  if (!wrap) {
+    return;
+  }
+
+  const table = wrap.querySelector("table");
+  if (!table) {
+    return;
+  }
+
+  const targetRows = options.targetRows ?? 3;
+  const groupSelector = options.groupSelector ?? null;
+  const rows = [...tbodyEl.querySelectorAll("tr")];
+  if (rows.length === 0) {
+    wrap.style.maxHeight = "";
+    return;
+  }
+
+  const headerHeight = table.tHead?.getBoundingClientRect().height ?? 0;
+  let bodyHeight = 0;
+
+  if (groupSelector) {
+    let groupsSeen = 0;
+    for (const row of rows) {
+      if (row.matches(groupSelector)) {
+        groupsSeen += 1;
+      }
+      if (groupsSeen > targetRows) {
+        break;
+      }
+      bodyHeight += row.getBoundingClientRect().height;
+    }
+  } else {
+    for (let i = 0; i < Math.min(targetRows, rows.length); i += 1) {
+      bodyHeight += rows[i].getBoundingClientRect().height;
+    }
+  }
+
+  wrap.style.maxHeight = `${Math.ceil(headerHeight + bodyHeight + 2)}px`;
+}
+
+function applyLedgerScrollCaps() {
+  capLedgerWrapByRows(snapshotBodyEl, { targetRows: 3 });
+  capLedgerWrapByRows(costBodyEl, { targetRows: 3 });
+  capLedgerWrapByRows(observeBodyEl, { targetRows: 3 });
+  capLedgerWrapByRows(branchBodyEl, { targetRows: 3, groupSelector: ".ledger-month-start" });
+}
+
 function render() {
   const state = game.getState();
 
@@ -411,6 +460,7 @@ function render() {
   renderLog(state);
   renderRailroadName(state);
   renderCurrentMonth(state);
+  applyLedgerScrollCaps();
 
   reportEl.textContent = state.gameOver
     ? `${state.report} Outcome: ${state.result}.`
