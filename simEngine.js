@@ -623,6 +623,13 @@ function applyAction(state, actionId) {
   return applyCorporateAction(state, actionId);
 }
 
+function applyTurnipSqueeze(state) {
+  state.cash += 50000;
+  state.confidence -= randomInt(1, 2);
+  state.morale -= randomInt(1, 2);
+  return "Owners squeezed the turnip for $50,000 of extra cash.";
+}
+
 function customerStatusFromHealth(health) {
   if (health >= 60) {
     return "stable";
@@ -884,21 +891,27 @@ export function createGame() {
   writeCostRow(state);
   writeMarketRow(state);
 
-  function step(actionId) {
+  function step(actionId, options = {}) {
     if (state.gameOver) {
       return state;
     }
 
     const cashBeforeAction = state.cash;
     const actionSummary = applyAction(state, actionId);
+    const notes = [actionSummary];
+
+    if (options.squeezeTurnip) {
+      notes.push(applyTurnipSqueeze(state));
+    }
+
     state.pendingActionCashDelta = state.cash - cashBeforeAction;
-    state.report = actionSummary;
+    state.report = notes.join(" ");
 
     state.market = marketBaseline(state);
     applyMonthlyDrag(state);
 
     const ending = evaluateEnding(state);
-    state.log.unshift(`Month ${state.month} (${state.market.economy} economy): ${actionSummary}`);
+    state.log.unshift(`Month ${state.month} (${state.market.economy} economy): ${notes.join(" ")}`);
 
     writeHistoryRow(state);
     writeCostRow(state);

@@ -7,10 +7,13 @@ const costBodyEl = document.getElementById("costBody");
 const observeBodyEl = document.getElementById("observeBody");
 const branchBodyEl = document.getElementById("branchBody");
 const actionsEl = document.getElementById("actions");
+const turnipBtn = document.getElementById("turnipBtn");
 const reportEl = document.getElementById("report");
 const logEl = document.getElementById("log");
 const restartBtn = document.getElementById("restartBtn");
 const currentMonthEl = document.getElementById("currentMonth");
+
+let turnipArmed = false;
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -242,6 +245,9 @@ function renderBranchLedger(state) {
 
 function renderActions(state) {
   actionsEl.innerHTML = "";
+  turnipBtn.disabled = state.gameOver;
+  turnipBtn.classList.toggle("is-armed", turnipArmed && !state.gameOver);
+  turnipBtn.setAttribute("aria-pressed", turnipArmed ? "true" : "false");
 
   const actions = game.getActions();
   const branchGroups = new Map();
@@ -306,7 +312,8 @@ function createActionButton(action, disabled) {
   `;
 
   button.addEventListener("click", () => {
-    game.step(action.id);
+    game.step(action.id, { squeezeTurnip: turnipArmed });
+    turnipArmed = false;
     render();
   });
 
@@ -334,8 +341,18 @@ function render() {
 }
 
 restartBtn.addEventListener("click", () => {
+  turnipArmed = false;
   game.reset();
   render();
+});
+
+turnipBtn.addEventListener("click", () => {
+  if (game.getState().gameOver) {
+    return;
+  }
+
+  turnipArmed = !turnipArmed;
+  renderActions(game.getState());
 });
 
 render();

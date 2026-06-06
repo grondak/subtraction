@@ -7,10 +7,12 @@ A static web game where you run a shortline freight railroad into collapse.
 No build tools are required.
 
 1. Open `index.html` in your browser.
-2. Click one action each month.
-3. Watch the company snapshot table grow one row per month.
-4. Track Observe/Orient signals in the monthly market table: economy grade plus shipper and receiver lane pressure.
-5. Try to trigger one of the failure outcomes before month 25.
+2. Optionally arm `Squeeze the Turnip (take out $50k for yourself this month)`.
+3. Click one primary action each month.
+4. The turnip action (if armed) applies in addition to your primary action.
+5. Watch the company snapshot table grow one row per month.
+6. Track Observe/Orient signals in the monthly market table: economy grade plus shipper and receiver lane pressure.
+7. Try to trigger one of the failure outcomes before month 25.
 
 ## Game Model
 
@@ -25,6 +27,7 @@ No build tools are required.
 	- `Chemical Plant Spur`
 - Each month you can choose targeted branch actions: maintain, repair, or abandon.
 - Corporate controls now include paired opposites: raise/drop rates, defer/perform system maintenance, lease/return emergency locomotives, and cut/increase crew overtime.
+- A supplemental side-action, `Squeeze the Turnip`, can be applied once per month in addition to the selected primary action.
 - Jumbo loan controls include principal paydown and rate renegotiation to the current market rate.
 - Abandoning a branch removes service for that branch's shipper and receiver.
 - Lane pressure and moved cars are logged in row-per-month format.
@@ -36,10 +39,12 @@ No build tools are required.
 - Customer businesses now carry viability states (`stable`, `distressed`, `critical`, `failed`).
 - Economy conditions directly affect customer health drift and failure risk.
 - Receivership triggers when cash falls below the covenant cash limit shown in Company Snapshot.
+- `Months to Covenant` estimates runway using current operating balance and covenant distance.
 
 ## Key Dashboards
 
 - `Company Snapshot`: month, cash, debt, debt service next month, loan rate, covenant limit, months to covenant, moved carloads, and operating condition indicators.
+- `Current Month Badge`: live month indicator that advances immediately when a turn is submitted.
 - `Company Cost Ledger`: monthly expenditure breakout plus revenue and operating balance.
 - `Observe and Orient`: lane-level demand, moved cars, unserved cars, and service rate.
 - `Branch Infrastructure Ledger`: monthly group with branch sub-rows for status, costs, profit, and margin.
@@ -67,3 +72,8 @@ Because all assets are relative paths (`./game.js`, `./styles.css`), no base-pat
 - The game uses native ES modules (`game.js` + `simEngine.js`).
 - Styling is in `styles.css`.
 - This setup replaces a Python simulator with browser-native JavaScript.
+
+## License
+
+This project is licensed under the GNU Lesser General Public License, version 3 (LGPL-3.0).
+See [LICENSE](LICENSE).

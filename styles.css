@@ -221,6 +221,24 @@ body {
   margin-top: 6px;
 }
 
+.turnip-btn {
+  margin-bottom: 10px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(20, 17, 15, 0.25);
+  background: #fff9ef;
+  color: #3b2a22;
+  font: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.turnip-btn.is-armed {
+  background: #1f6e67;
+  color: #edfbf9;
+  border-color: rgba(16, 64, 59, 0.35);
+}
+
 .action-btn,
 .restart-btn {
   font: inherit;
