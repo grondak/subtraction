@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Subtraction: Shortline Freight Railroad Simulator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="bg-orb orb-1"></div>
+    <div class="bg-orb orb-2"></div>
+
+    <main class="app">
+      <header class="hero reveal">
+        <p class="kicker">Regional Freight Mismanagement</p>
+        <h1>Subtraction</h1>
+        <p class="tagline">Run a shortline railroad into the ground, one month at a time.</p>
+        <p id="currentMonth" class="month-badge" aria-live="polite"></p>
+      </header>
+
+      <section class="panel reveal delay-1">
+        <h2>Company Snapshot</h2>
+        <div class="table-wrap">
+          <table class="snapshot-table" aria-label="Monthly company snapshot">
+            <thead>
+              <tr>
+                <th scope="col" class="col-month">Month</th>
+                <th scope="col" class="col-cash">Cash</th>
+                <th scope="col" class="col-debt">Debt</th>
+                <th scope="col" class="col-debt-service">Debt Service Next Mo</th>
+                <th scope="col" class="col-loan-rate">Loan Rate</th>
+                <th scope="col" class="col-covenant">Covenant Limit</th>
+                <th scope="col" class="col-covenant-runway">Months to Covenant</th>
+                <th scope="col" class="col-carloads">Moved Carloads</th>
+                <th scope="col" class="col-track">Track Condition</th>
+                <th scope="col" class="col-morale">Crew Morale</th>
+                <th scope="col" class="col-confidence">Shipper Confidence</th>
+                <th scope="col" class="col-line">Line Miles</th>
+                <th scope="col" class="col-lease">Leased Locos</th>
+              </tr>
+            </thead>
+            <tbody id="snapshotBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel reveal delay-2">
+        <h2>Company Cost Ledger (Monthly)</h2>
+        <div class="table-wrap">
+          <table class="snapshot-table" aria-label="Monthly company expenditure breakdown">
+            <thead>
+              <tr>
+                <th scope="col">Month</th>
+                <th scope="col">Crew Payroll</th>
+                <th scope="col">Locomotive Lease</th>
+                <th scope="col">Debt Service</th>
+                <th scope="col">Dispatch/Ops</th>
+                <th scope="col">Infrastructure</th>
+                <th scope="col">Disruption Costs</th>
+                <th scope="col">Policy Spend</th>
+                <th scope="col">Total Expenditure</th>
+                <th scope="col">Freight Revenue</th>
+                <th scope="col">Operating Balance</th>
+              </tr>
+            </thead>
+            <tbody id="costBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel reveal delay-2">
+        <h2>Observe and Orient (External Factors)</h2>
+        <div class="table-wrap">
+          <table class="snapshot-table" aria-label="Monthly market conditions">
+            <thead>
+              <tr>
+                <th scope="col">Month</th>
+                <th scope="col">Economy</th>
+                <th scope="col">Logging to Paper</th>
+                <th scope="col">Grain to Feed</th>
+                <th scope="col">Quarry to Cement</th>
+                <th scope="col">Oil to Refinery</th>
+                <th scope="col">Timber Reload to Mill</th>
+                <th scope="col">Chemicals to Plant</th>
+                <th scope="col">Demand Offered Cars</th>
+                <th scope="col">Moved Carloads</th>
+                <th scope="col">Unserved Cars</th>
+                <th scope="col">Service Rate</th>
+              </tr>
+            </thead>
+            <tbody id="observeBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel reveal delay-3">
+        <h2>Branch Infrastructure Ledger (Monthly)</h2>
+        <div class="table-wrap">
+          <table class="snapshot-table" aria-label="Monthly branch infrastructure costs">
+            <thead>
+              <tr>
+                <th scope="col">Month</th>
+                <th scope="col">Branch Line</th>
+                <th scope="col">Status</th>
+                <th scope="col">Costs</th>
+                <th scope="col">Profit</th>
+                <th scope="col">Margin</th>
+                <th scope="col">Active Cost Total</th>
+                <th scope="col">Total Branch Profit</th>
+                <th scope="col">Profit Ranking</th>
+              </tr>
+            </thead>
+            <tbody id="branchBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel reveal delay-4">
+        <h2>Choose Your Next Mistake (Monthly Turn)</h2>
+        <div id="actions" class="actions-grid"></div>
+      </section>
+
+      <section class="panel reveal delay-5">
+        <h2>Monthly Dispatcher Report</h2>
+        <p id="report" class="report">Welcome to Month 1. Local shippers are still willing to trust you. For now.</p>
+      </section>
+
+      <section class="panel reveal delay-6">
+        <h2>Game Log</h2>
+        <ul id="log" class="log"></ul>
+      </section>
+
+      <footer class="footer reveal delay-6">
+        <button id="restartBtn" class="restart-btn" type="button">Start Over</button>
+      </footer>
+    </main>
+
+    <script type="module" src="game.js"></script>
+  </body>
+</html>

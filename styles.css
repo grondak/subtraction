@@ -1,0 +1,370 @@
+:root {
+  --bg-ink: #14110f;
+  --bg-paper: #f7f2e7;
+  --card: #fff9ef;
+  --accent-hot: #d14a1f;
+  --accent-cold: #1f6e67;
+  --text-main: #211a17;
+  --text-soft: #5d4e47;
+  --danger: #9f1f1f;
+  --radius: 16px;
+  --shadow: 0 20px 45px rgba(20, 17, 15, 0.16);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Space Grotesk", sans-serif;
+  color: var(--text-main);
+  background:
+    radial-gradient(circle at 20% 15%, #f5dcb5 0%, rgba(245, 220, 181, 0) 40%),
+    radial-gradient(circle at 80% 85%, #c8eadf 0%, rgba(200, 234, 223, 0) 45%),
+    linear-gradient(160deg, var(--bg-paper) 0%, #efe4d2 100%);
+  overflow-x: hidden;
+}
+
+.bg-orb {
+  position: fixed;
+  border-radius: 999px;
+  filter: blur(30px);
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.orb-1 {
+  width: 220px;
+  height: 220px;
+  background: rgba(209, 74, 31, 0.32);
+  top: -40px;
+  right: 4vw;
+}
+
+.orb-2 {
+  width: 280px;
+  height: 280px;
+  background: rgba(31, 110, 103, 0.3);
+  bottom: -50px;
+  left: -40px;
+}
+
+.app {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 32px 18px 40px;
+}
+
+.hero {
+  background: #18120f;
+  color: #fff7ea;
+  border-radius: var(--radius);
+  padding: 24px;
+  box-shadow: var(--shadow);
+}
+
+.kicker {
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  opacity: 0.85;
+  margin: 0;
+}
+
+.hero h1 {
+  margin: 10px 0 6px;
+  font-family: "Bebas Neue", sans-serif;
+  font-size: clamp(2.2rem, 8vw, 4.2rem);
+  letter-spacing: 0.03em;
+  line-height: 0.95;
+}
+
+.tagline {
+  margin: 0;
+  max-width: 45ch;
+  color: #f8d8b8;
+}
+
+.month-badge {
+  display: inline-block;
+  margin: 12px 0 0;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(248, 216, 184, 0.45);
+  background: rgba(20, 17, 15, 0.46);
+  color: #fff8ed;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.panel {
+  margin-top: 16px;
+  background: var(--card);
+  border: 1px solid rgba(33, 26, 23, 0.08);
+  border-radius: var(--radius);
+  padding: 16px;
+  box-shadow: var(--shadow);
+}
+
+.panel h2 {
+  margin: 0 0 10px;
+  font-size: 1.05rem;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+.snapshot-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 760px;
+  font-size: 0.88rem;
+}
+
+.snapshot-table th,
+.snapshot-table td {
+  border-bottom: 1px solid rgba(33, 26, 23, 0.08);
+  padding: 8px 10px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.snapshot-table th {
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  color: var(--text-soft);
+}
+
+.snapshot-table tbody tr:nth-child(odd) {
+  background: rgba(247, 242, 231, 0.6);
+}
+
+.ledger-month-start td {
+  border-top: 2px solid rgba(33, 26, 23, 0.14);
+}
+
+.ledger-subrow td[rowspan] {
+  background: rgba(255, 249, 239, 0.8);
+  font-weight: 600;
+}
+
+.snapshot-table .col-cash {
+  background: rgba(31, 110, 103, 0.08);
+}
+
+.snapshot-table .col-debt {
+  background: rgba(183, 88, 32, 0.08);
+}
+
+.snapshot-table .col-debt-service,
+.snapshot-table .col-loan-rate,
+.snapshot-table .col-covenant,
+.snapshot-table .col-covenant-runway {
+  background: rgba(138, 69, 26, 0.1);
+}
+
+.snapshot-table .col-carloads {
+  background: rgba(31, 72, 110, 0.08);
+}
+
+.snapshot-table .col-track,
+.snapshot-table .col-morale,
+.snapshot-table .col-confidence {
+  background: rgba(99, 77, 43, 0.08);
+}
+
+.snapshot-table .col-line,
+.snapshot-table .col-lease {
+  background: rgba(56, 42, 30, 0.06);
+}
+
+.actions-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.branch-groups {
+  display: grid;
+  gap: 10px;
+}
+
+.branch-action-box {
+  background: #fff6e9;
+  border: 1px solid rgba(209, 74, 31, 0.28);
+  border-radius: 12px;
+  padding: 10px;
+}
+
+.branch-action-title {
+  margin: 0 0 8px;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #6b3724;
+}
+
+.branch-action-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px;
+}
+
+.corporate-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.action-btn,
+.restart-btn {
+  font: inherit;
+  cursor: pointer;
+  border-radius: 12px;
+  border: none;
+  transition: transform 0.16s ease, box-shadow 0.16s ease;
+}
+
+.action-btn {
+  text-align: left;
+  padding: 12px;
+  background: #fbe4d4;
+  border: 1px solid rgba(209, 74, 31, 0.25);
+  color: #471f11;
+}
+
+.action-btn strong {
+  display: block;
+  font-size: 0.95rem;
+  margin-bottom: 3px;
+}
+
+.action-btn .action-desc {
+  font-size: 0.82rem;
+  color: #6b3724;
+}
+
+.action-btn .action-note {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.72rem;
+  line-height: 1.25;
+  color: #84503b;
+  opacity: 0.95;
+}
+
+.action-btn:hover,
+.action-btn:focus-visible,
+.restart-btn:hover,
+.restart-btn:focus-visible {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(20, 17, 15, 0.15);
+}
+
+.report {
+  margin: 0;
+  line-height: 1.45;
+}
+
+.log {
+  margin: 0;
+  padding-left: 18px;
+  max-height: 220px;
+  overflow: auto;
+}
+
+.log li {
+  margin-bottom: 6px;
+  color: var(--text-soft);
+}
+
+.footer {
+  margin-top: 14px;
+}
+
+.restart-btn {
+  padding: 10px 14px;
+  background: var(--accent-cold);
+  color: #eafaf8;
+  border: 1px solid rgba(16, 64, 59, 0.35);
+}
+
+.is-danger {
+  color: var(--danger);
+}
+
+.ledger-money {
+  font-weight: 600;
+}
+
+.ledger-expense {
+  color: #7c3f1f;
+}
+
+.ledger-expense-total {
+  color: #9f1f1f;
+}
+
+.ledger-revenue {
+  color: #1b6b63;
+}
+
+.ledger-balance {
+  color: #235b2e;
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(10px);
+  animation: reveal 0.45s ease forwards;
+}
+
+.delay-1 {
+  animation-delay: 0.08s;
+}
+
+.delay-2 {
+  animation-delay: 0.14s;
+}
+
+.delay-3 {
+  animation-delay: 0.2s;
+}
+
+.delay-4 {
+  animation-delay: 0.26s;
+}
+
+.delay-5 {
+  animation-delay: 0.32s;
+}
+
+.delay-6 {
+  animation-delay: 0.38s;
+}
+
+@keyframes reveal {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 640px) {
+  .app {
+    padding: 18px 12px 28px;
+  }
+
+  .hero {
+    padding: 18px;
+  }
+
+  .panel {
+    padding: 12px;
+  }
+}
