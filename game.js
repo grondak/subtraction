@@ -197,7 +197,7 @@ function branchStatusLabel(branch) {
 
   if (branch.status === "active") {
     const customer = branch.customerStatus ?? "stable";
-    return `${branch.condition}% (Active, Cust ${customer})`;
+    return `${Math.round(branch.condition)}% (Active, Cust ${customer})`;
   }
 
   return "Abandoned";

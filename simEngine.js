@@ -193,6 +193,10 @@ function randomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+function randomFloat(min, max) {
+  return min + Math.random() * (max - min);
+}
+
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
 }
@@ -213,6 +217,7 @@ function createBranches() {
     condition: randomInt(62, 82),
     profitabilityTier: template.profitabilityTier,
     revenueFactor: template.revenueFactor,
+    decayGraceMonths: 0,
     customerHealth: randomInt(64, 84),
     customerStatus: "stable",
   }));
@@ -234,7 +239,43 @@ function recalcTrackCondition(state) {
   }
 
   const total = active.reduce((sum, branch) => sum + branch.condition, 0);
-  state.trackCondition = Math.round(total / active.length);
+  state.trackCondition = clamp(Math.round(total / active.length), 0, 100);
+}
+
+function clampQualityMetrics(state) {
+  state.trackCondition = clamp(state.trackCondition, 0, 100);
+  state.serviceCapacity = clamp(state.serviceCapacity, 20, 100);
+  state.morale = clamp(state.morale, 0, 100);
+  state.confidence = clamp(state.confidence, 0, 100);
+
+  for (const branch of state.branches) {
+    branch.condition = clamp(branch.condition, 0, 100);
+    branch.decayGraceMonths = Math.max(0, Math.floor(branch.decayGraceMonths ?? 0));
+    branch.customerHealth = clamp(branch.customerHealth, 0, 100);
+  }
+}
+
+function stagedConditionDecay(condition) {
+  if (condition >= 80) {
+    return 0.5;
+  }
+  if (condition >= 60) {
+    return randomFloat(1, 2);
+  }
+  if (condition >= 40) {
+    return randomFloat(2, 4);
+  }
+  return randomFloat(4, 7);
+}
+
+function applyRepairGainWithDiminishingReturns(branch, nominalGain) {
+  if (branch.condition >= 95) {
+    return nominalGain * 0.2;
+  }
+  if (branch.condition >= 90) {
+    return nominalGain * 0.4;
+  }
+  return nominalGain;
 }
 
 function marketBaseline(state) {
@@ -519,6 +560,7 @@ function applyBranchAction(state, actionId) {
     const spend = Math.round(sumCosts(branch.costs) * 0.7);
     state.cash -= spend;
     branch.condition += randomInt(6, 12);
+    branch.decayGraceMonths = Math.max(branch.decayGraceMonths ?? 0, randomInt(4, 7));
     state.disruptionPenalty -= 0.03;
     state.morale += randomInt(1, 3);
     recalcTrackCondition(state);
@@ -528,7 +570,9 @@ function applyBranchAction(state, actionId) {
   if (verb === "repair") {
     const spend = Math.round(sumCosts(branch.costs) * 1.45) + 90000;
     state.cash -= spend;
-    branch.condition += randomInt(18, 30);
+    const nominalGain = randomInt(18, 30);
+    branch.condition += applyRepairGainWithDiminishingReturns(branch, nominalGain);
+    branch.decayGraceMonths = Math.max(branch.decayGraceMonths ?? 0, randomInt(4, 7));
     state.disruptionPenalty -= 0.06;
     state.confidence += randomInt(2, 5);
     recalcTrackCondition(state);
@@ -580,6 +624,7 @@ function applyCorporateAction(state, actionId) {
       state.serviceCapacity += randomInt(6, 10);
       for (const branch of activeBranches(state)) {
         branch.condition += randomInt(3, 7);
+        branch.decayGraceMonths = Math.max(branch.decayGraceMonths ?? 0, randomInt(6, 12));
       }
       recalcTrackCondition(state);
       state.confidence += randomInt(2, 5);
@@ -724,8 +769,13 @@ function applyMonthlyDrag(state) {
     const infraCost = sumCosts(branch.costs);
     branchCostTotal += infraCost;
 
-    const wear = randomInt(2, 5) + state.monthlyWearModifier;
-    branch.condition -= wear;
+    if ((branch.decayGraceMonths ?? 0) > 0) {
+      branch.decayGraceMonths -= 1;
+    } else {
+      const stagedDecay = stagedConditionDecay(branch.condition);
+      const wear = clamp(stagedDecay + state.monthlyWearModifier, 0, 8);
+      branch.condition -= wear;
+    }
 
     if (branch.condition < 35 && Math.random() < 0.35) {
       const incidentCost = randomInt(50000, 135000);
@@ -845,11 +895,7 @@ function applyMonthlyDrag(state) {
 
   recalcLineMiles(state);
   recalcTrackCondition(state);
-
-  state.trackCondition = clamp(state.trackCondition, 0, 100);
-  state.serviceCapacity = clamp(state.serviceCapacity, 20, 100);
-  state.morale = clamp(state.morale, 0, 100);
-  state.confidence = clamp(state.confidence, 0, 100);
+  clampQualityMetrics(state);
   state.disruptionPenalty = clamp(state.disruptionPenalty * 0.5, -0.12, 0.24);
   state.pricePerCarload = Math.max(200, Math.round(state.pricePerCarload * 0.97));
   state.monthlyWearModifier = 0;
@@ -994,6 +1040,7 @@ export function createGame() {
 
     const cashBeforeAction = state.cash;
     const actionSummary = applyAction(state, actionId);
+    clampQualityMetrics(state);
     const notes = [actionSummary];
 
     if (options.squeezeTurnip) {
