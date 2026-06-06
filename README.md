@@ -6,31 +6,34 @@ A static web game where you run a shortline freight railroad into collapse.
 
 No build tools are required.
 
-1. Open `index.html` in your browser.
-2. Optionally arm `Squeeze the Turnip (take out $50k for yourself this month)`.
+1. Open `index.html` for the briefing/strategy page, then click through to `game.html`.
+2. Optionally arm `Add to Slush Fund (Squeeze the Turnip)` to divert $50k for yourself this month.
 3. Click one primary action each month.
-4. The turnip action (if armed) applies in addition to your primary action.
-5. The game auto-runs a baseline month before your first decision so initial revenue and branch economics are visible.
-6. Watch the company snapshot table grow one row per month.
-7. First actionable turn starts in Month 2 after baseline seeding.
-8. Track Observe/Orient signals in the monthly market table: economy grade plus shipper and receiver lane pressure.
-9. Try to trigger one of the failure outcomes before month 25.
+4. The slush fund action (if armed) applies in addition to your primary action.
+5. Slush allocation percentages must be non-negative and add up to exactly `100`.
+6. The game auto-runs a baseline month before your first decision so initial revenue and branch economics are visible.
+7. Watch the company snapshot table grow one row per month.
+8. First actionable turn starts in Month 2 after baseline seeding.
+9. Track Observe/Orient signals in the monthly market table: economy grade plus shipper and receiver lane pressure.
+10. Try to trigger one of the failure outcomes before month 25.
 
 ## Game Model
 
 - Economy condition uses 5 grades (`Terrible`, `Soft`, `Tepid`, `Firm`, `Terrific`) and shifts every 4-6 months.
 - Freight lanes are modeled shipper-to-receiver on explicit branch lines and spurs.
 - Current network includes six lines:
-	- `Timber Branch`
+	- `Aerospace Parts Branch`
 	- `Agri Branch`
 	- `Stone Branch`
 	- `Oil Spur`
-	- `Timber Reload Spur`
+	- `Timber Spur`
 	- `Chemical Plant Spur`
 - Each month you can choose targeted branch actions: maintain, repair, or abandon.
 - Corporate controls now include paired opposites: raise/drop rates, defer/perform system maintenance, lease/return emergency locomotives, and cut/increase crew overtime.
 - Service capacity is an explicit network stat that decays every month and is restored by system maintenance actions.
-- A supplemental side-action, `Squeeze the Turnip`, can be applied once per month in addition to the selected primary action.
+- A supplemental side-action, `Add to Slush Fund (Squeeze the Turnip)`, can be applied once per month in addition to the selected primary action.
+- Slush fund allocation is split across five luxury projects each month you arm it, and percentages must total `100`.
+- Slush achievements trigger mini-party events at these thresholds: `Wild Party` ($10k), `Social Media-Fired Vacation Around the World` ($50k), `Three-Car Garage` ($100k), `Buy That Race Car` ($200k), and `Build That Yacht!` ($400k).
 - Jumbo loan controls include principal paydown and rate renegotiation to the current market rate.
 - Abandoning a branch removes service for that branch's shipper and receiver.
 - Lane pressure and moved cars are logged in row-per-month format.
@@ -88,7 +91,7 @@ Because all assets are relative paths (`./game.js`, `./styles.css`), no base-pat
 - Added debt and covenant visibility: debt service next month, loan rate, covenant limit, and months-to-covenant runway.
 - Added jumbo loan controls (pay down principal, renegotiate to market rate).
 - Added monthly cost ledger for visible expenditures.
-- Added supplemental side-action: Squeeze the Turnip (stackable with primary action).
+- Added supplemental side-action: Add to Slush Fund (Squeeze the Turnip) (stackable with primary action).
 - Added GNU LGPL v3 license and GitHub Pages-ready static deployment setup.
 
 ### 2026-06 Service Capacity Update

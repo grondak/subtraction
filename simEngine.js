@@ -77,14 +77,52 @@ const ECONOMY_STATES = [
 
 const INFRA_COST_MULTIPLIER = 0.4;
 const FREIGHT_REVENUE_MULTIPLIER = 2;
+const RAILROAD_RENAME_COST = 10000;
+const TURNIP_SQUEEZE_AMOUNT = 50000;
+
+const SLUSH_ACTIVITIES = [
+  { id: "yacht", name: "Build That Yacht!", target: 400000 },
+  { id: "race-car", name: "Buy That Race Car", target: 200000 },
+  { id: "garage", name: "Three-Car Garage", target: 100000 },
+  { id: "vacation", name: "Social Media-Fired Vacation Around the World", target: 50000 },
+  { id: "wild-party", name: "Wild Party", target: 10000 },
+];
+
+const RAILROAD_NAME_PARTS_FIRST = [
+  "Aerospace",
+  "Frontier",
+  "Summit",
+  "Granite",
+  "Riverbend",
+  "Pioneer",
+  "Iron",
+  "Cedar",
+  "Bluebird",
+  "Redstone",
+];
+
+const RAILROAD_NAME_PARTS_LAST = [
+  "Stone",
+  "Valley",
+  "Junction",
+  "Canyon",
+  "Timber",
+  "Prairie",
+  "Coastal",
+  "Summit",
+  "Basin",
+  "Works",
+];
+
+const RAILROAD_NAME_SUFFIXES = ["RR", "Railroad", "Short Line", "Line", ""];
 
 const BRANCH_TEMPLATES = [
   {
-    key: "timber-branch",
-    name: "Timber Branch",
+    key: "aerospace-parts",
+    name: "Aerospace Parts Branch",
     miles: 22,
-    shipper: "Pine Ridge Logging",
-    receiver: "North River Paper Mill",
+    shipper: "SkyForge Components",
+    receiver: "Orbital Assembly Works",
     profitabilityTier: "profitable",
     revenueFactor: 1.2,
     shipperBase: 380,
@@ -153,7 +191,7 @@ const BRANCH_TEMPLATES = [
   },
   {
     key: "timber-spur",
-    name: "Timber Reload Spur",
+    name: "Timber Spur",
     miles: 8,
     shipper: "Cedar Ridge Sawmill",
     receiver: "North River Paper Mill",
@@ -195,6 +233,86 @@ function randomInt(min, max) {
 
 function randomFloat(min, max) {
   return min + Math.random() * (max - min);
+}
+
+function allRailroadNames() {
+  const names = [];
+  for (const first of RAILROAD_NAME_PARTS_FIRST) {
+    for (const last of RAILROAD_NAME_PARTS_LAST) {
+      for (const suffix of RAILROAD_NAME_SUFFIXES) {
+        const base = `${first} ${last}`;
+        names.push(suffix ? `${base} ${suffix}` : base);
+      }
+    }
+  }
+  return names;
+}
+
+const RAILROAD_NAME_POOL = allRailroadNames();
+if (RAILROAD_NAME_POOL.length !== 500) {
+  throw new Error(`Expected 500 railroad names, found ${RAILROAD_NAME_POOL.length}.`);
+}
+
+function pickRailroadName() {
+  return RAILROAD_NAME_POOL[randomInt(0, RAILROAD_NAME_POOL.length - 1)];
+}
+
+function createSlushActivities() {
+  return SLUSH_ACTIVITIES.map((activity) => ({
+    ...activity,
+    funded: 0,
+    achieved: false,
+    achievedMonth: null,
+  }));
+}
+
+function pickDifferentRailroadName(currentName) {
+  if (RAILROAD_NAME_POOL.length <= 1) {
+    return currentName;
+  }
+
+  for (let attempts = 0; attempts < 12; attempts += 1) {
+    const candidate = pickRailroadName();
+    if (candidate !== currentName) {
+      return candidate;
+    }
+  }
+
+  return RAILROAD_NAME_POOL.find((name) => name !== currentName) ?? currentName;
+}
+
+function sanitizeRailroadName(input) {
+  return input.replace(/\s+/gu, " ").trim().slice(0, 72);
+}
+
+function normalizedAllocation(state, allocationInput) {
+  const activities = state.slushActivities ?? [];
+  const validIds = new Set(activities.map((activity) => activity.id));
+  const raw = {};
+
+  if (allocationInput && typeof allocationInput === "object") {
+    for (const [id, value] of Object.entries(allocationInput)) {
+      if (!validIds.has(id)) {
+        continue;
+      }
+      const numeric = Number(value);
+      if (!Number.isFinite(numeric) || numeric <= 0) {
+        continue;
+      }
+      raw[id] = numeric;
+    }
+  }
+
+  const total = Object.values(raw).reduce((sum, value) => sum + value, 0);
+  const isPercentScale = Math.abs(total - 100) <= 0.0001;
+  const isFractionScale = Math.abs(total - 1) <= 0.0001;
+  if (!isPercentScale && !isFractionScale) {
+    return null;
+  }
+
+  return Object.fromEntries(
+    activities.map((activity) => [activity.id, (raw[activity.id] ?? 0) / total]),
+  );
 }
 
 function clamp(value, min, max) {
@@ -429,6 +547,7 @@ function emptyCostRow(month) {
 function baseState() {
   const state = {
     month: 1,
+    railroadName: pickRailroadName(),
     cash: 2450000,
     debt: 1200000,
     carloads: 920,
@@ -455,6 +574,7 @@ function baseState() {
     emergencyLeaseUnits: 0,
     lowTrafficMonths: 0,
     slushFund: 0,
+    slushActivities: createSlushActivities(),
     loanInterestRateMonthly: 0.0125,
     currentMarketRateMonthly: 0.012,
     monthlyCosts: emptyCostRow(1),
@@ -702,12 +822,54 @@ function applyAction(state, actionId) {
   return applyCorporateAction(state, actionId);
 }
 
-function applyTurnipSqueeze(state) {
-  state.cash -= 50000;
-  state.slushFund += 50000;
+function applyTurnipSqueeze(state, allocationInput) {
+  const fractions = normalizedAllocation(state, allocationInput);
+  if (!fractions) {
+    return "Slush fund transfer canceled: allocation percentages must add up to exactly 100%.";
+  }
+
+  state.cash -= TURNIP_SQUEEZE_AMOUNT;
+  state.slushFund += TURNIP_SQUEEZE_AMOUNT;
   state.confidence -= randomInt(1, 2);
   state.morale -= randomInt(1, 2);
-  return "Owners squeezed the turnip: $50,000 was diverted to the private slush fund.";
+  const activities = state.slushActivities ?? [];
+  let remaining = TURNIP_SQUEEZE_AMOUNT;
+
+  for (let i = 0; i < activities.length; i += 1) {
+    const activity = activities[i];
+    const isLast = i === activities.length - 1;
+    const allocation = isLast
+      ? remaining
+      : Math.min(remaining, Math.round(TURNIP_SQUEEZE_AMOUNT * (fractions[activity.id] ?? 0)));
+    activity.funded += allocation;
+    remaining -= allocation;
+  }
+
+  const unlocked = [];
+  for (const activity of activities) {
+    if (!activity.achieved && activity.funded >= activity.target) {
+      activity.achieved = true;
+      activity.achievedMonth = state.month;
+      unlocked.push(activity.name);
+    }
+  }
+
+  if (unlocked.length > 0) {
+    const partyMoraleHit = randomInt(4, 9) * unlocked.length;
+    state.morale -= partyMoraleHit;
+    const achievementLine = `Achievement unlocked: ${unlocked.join("; ")}. Mini party held. Crew morale dropped ${partyMoraleHit} points.`;
+    state.log.unshift(`Month ${state.month}: ${achievementLine}`);
+    state.report += ` ${achievementLine}`;
+  }
+
+  const allocationSummary = activities
+    .map((activity) => {
+      const ratio = fractions[activity.id] ?? 0;
+      return `${activity.name} ${(ratio * 100).toFixed(0)}%`;
+    })
+    .join(" | ");
+
+  return `Owners squeezed the turnip into the slush fund: $${TURNIP_SQUEEZE_AMOUNT.toLocaleString()} diverted and allocated (${allocationSummary}).`;
 }
 
 function customerStatusFromHealth(health) {
@@ -1044,7 +1206,7 @@ export function createGame() {
     const notes = [actionSummary];
 
     if (options.squeezeTurnip) {
-      notes.push(applyTurnipSqueeze(state));
+      notes.push(applyTurnipSqueeze(state, options.turnipAllocation));
     }
 
     state.pendingActionCashDelta = state.cash - cashBeforeAction;
@@ -1084,6 +1246,40 @@ export function createGame() {
     return state;
   }
 
+  function renameRailroad(proposedName) {
+    if (state.gameOver) {
+      return { ok: false, message: "Cannot rename after the game has ended." };
+    }
+
+    if (state.cash < RAILROAD_RENAME_COST) {
+      return { ok: false, message: `Renaming costs $${RAILROAD_RENAME_COST.toLocaleString()}, but cash is too low.` };
+    }
+
+    const oldName = state.railroadName;
+    let nextName = "";
+
+    if (typeof proposedName === "string") {
+      const cleaned = sanitizeRailroadName(proposedName);
+      nextName = cleaned.length > 0 ? cleaned : pickDifferentRailroadName(oldName);
+    } else {
+      nextName = pickDifferentRailroadName(oldName);
+    }
+
+    if (nextName === oldName) {
+      return { ok: false, message: "Road name unchanged." };
+    }
+
+    state.cash -= RAILROAD_RENAME_COST;
+    state.railroadName = nextName;
+    state.report = `Road renamed from ${oldName} to ${nextName} for $${RAILROAD_RENAME_COST.toLocaleString()}.`;
+    state.log.unshift(
+      `Month ${state.month}: Road renamed from ${oldName} to ${nextName} for $${RAILROAD_RENAME_COST.toLocaleString()}.`,
+    );
+    state.log = state.log.slice(0, 24);
+
+    return { ok: true, message: state.report };
+  }
+
   function getState() {
     return state;
   }
@@ -1096,6 +1292,7 @@ export function createGame() {
   return {
     step,
     reset,
+    renameRailroad,
     getState,
     getActions,
   };

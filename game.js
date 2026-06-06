@@ -8,12 +8,23 @@ const observeBodyEl = document.getElementById("observeBody");
 const branchBodyEl = document.getElementById("branchBody");
 const actionsEl = document.getElementById("actions");
 const turnipBtn = document.getElementById("turnipBtn");
+const slushActivitiesEl = document.getElementById("slushActivities");
 const reportEl = document.getElementById("report");
 const logEl = document.getElementById("log");
 const restartBtn = document.getElementById("restartBtn");
+const railroadNameEl = document.getElementById("railroadName");
 const currentMonthEl = document.getElementById("currentMonth");
+const turnipDefaultLabel = turnipBtn.textContent.trim();
+const turnipAllocationInputs = {
+  yacht: document.getElementById("alloc-yacht"),
+  "race-car": document.getElementById("alloc-race-car"),
+  garage: document.getElementById("alloc-garage"),
+  vacation: document.getElementById("alloc-vacation"),
+  "wild-party": document.getElementById("alloc-wild-party"),
+};
 
 let turnipArmed = false;
+let turnipAllocation = null;
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -27,6 +38,59 @@ function renderCurrentMonth(state) {
   currentMonthEl.textContent = state.gameOver
     ? `Final Month Reached: ${monthLabel(state.month)}`
     : `Current Month: ${monthLabel(state.month)}`;
+}
+
+function renderRailroadName(state) {
+  railroadNameEl.textContent = `Road Name: ${state.railroadName}`;
+  railroadNameEl.title = "Click to rename road (cost: $10,000)";
+}
+
+function readTurnipAllocationInputs() {
+  const ids = ["yacht", "race-car", "garage", "vacation", "wild-party"];
+  const values = ids.map((id) => Number(turnipAllocationInputs[id]?.value));
+  if (values.some((value) => !Number.isFinite(value) || value < 0)) {
+    return null;
+  }
+
+  const total = values.reduce((sum, value) => sum + value, 0);
+  if (Math.abs(total - 100) > 0.0001) {
+    return null;
+  }
+
+  return Object.fromEntries(ids.map((id, index) => [id, values[index] / total]));
+}
+
+function renderSlushActivities(state) {
+  const activities = state.slushActivities ?? [];
+  const allocationText = turnipAllocation
+    ? activities
+        .map((activity) => `${activity.name}: ${Math.round((turnipAllocation[activity.id] ?? 0) * 100)}%`)
+        .join(" | ")
+    : "No squeeze allocation set for this month.";
+
+  slushActivitiesEl.innerHTML = `
+    <p class="slush-caption">Slush Fund Allocation: ${allocationText}</p>
+    <div class="slush-grid">
+      ${activities
+        .map((activity) => {
+          const pct = Math.min(100, (activity.funded / activity.target) * 100);
+          const achieved = activity.achieved
+            ? `<span class="slush-badge">Achievement: Month ${monthLabel(activity.achievedMonth)}</span>`
+            : "";
+          return `
+            <article class="slush-card ${activity.achieved ? "is-complete" : ""}">
+              <h3>${activity.name}</h3>
+              <p>$${activity.funded.toLocaleString()} / $${activity.target.toLocaleString()}</p>
+              <div class="slush-bar">
+                <span style="width: ${pct.toFixed(1)}%"></span>
+              </div>
+              ${achieved}
+            </article>
+          `;
+        })
+        .join("")}
+    </div>
+  `;
 }
 
 function statClass(key, value) {
@@ -86,7 +150,7 @@ function renderObserve(state) {
   const rows = [...state.marketHistory].reverse();
   observeBodyEl.innerHTML = rows
     .map((row) => {
-      const logging = laneByKey(row, "timber-branch");
+      const aerospaceParts = laneByKey(row, "aerospace-parts");
       const grain = laneByKey(row, "agri-branch");
       const quarry = laneByKey(row, "stone-branch");
       const oil = laneByKey(row, "oil-spur");
@@ -99,7 +163,7 @@ function renderObserve(state) {
         <tr>
           <td>${monthLabel(row.month)}</td>
           <td>${row.economy}</td>
-          <td>${logging ? `${logging.shipperCars}/${logging.receiverCars} (${logging.status})` : "-"}</td>
+          <td>${aerospaceParts ? `${aerospaceParts.shipperCars}/${aerospaceParts.receiverCars} (${aerospaceParts.status})` : "-"}</td>
           <td>${grain ? `${grain.shipperCars}/${grain.receiverCars} (${grain.status})` : "-"}</td>
           <td>${quarry ? `${quarry.shipperCars}/${quarry.receiverCars} (${quarry.status})` : "-"}</td>
           <td>${oil ? `${oil.shipperCars}/${oil.receiverCars} (${oil.status})` : "-"}</td>
@@ -255,6 +319,9 @@ function renderActions(state) {
   turnipBtn.disabled = state.gameOver;
   turnipBtn.classList.toggle("is-armed", turnipArmed && !state.gameOver);
   turnipBtn.setAttribute("aria-pressed", turnipArmed ? "true" : "false");
+  turnipBtn.textContent = turnipArmed
+    ? "ARMED: Add to Slush Fund (Squeeze the Turnip) with your next action"
+    : turnipDefaultLabel;
 
   const actions = game.getActions();
   const branchGroups = new Map();
@@ -319,8 +386,9 @@ function createActionButton(action, disabled) {
   `;
 
   button.addEventListener("click", () => {
-    game.step(action.id, { squeezeTurnip: turnipArmed });
+    game.step(action.id, { squeezeTurnip: turnipArmed, turnipAllocation });
     turnipArmed = false;
+    turnipAllocation = null;
     render();
   });
 
@@ -339,7 +407,9 @@ function render() {
   renderObserve(state);
   renderBranchLedger(state);
   renderActions(state);
+  renderSlushActivities(state);
   renderLog(state);
+  renderRailroadName(state);
   renderCurrentMonth(state);
 
   reportEl.textContent = state.gameOver
@@ -349,6 +419,7 @@ function render() {
 
 restartBtn.addEventListener("click", () => {
   turnipArmed = false;
+  turnipAllocation = null;
   game.reset();
   render();
 });
@@ -358,8 +429,48 @@ turnipBtn.addEventListener("click", () => {
     return;
   }
 
-  turnipArmed = !turnipArmed;
-  renderActions(game.getState());
+  if (turnipArmed) {
+    turnipArmed = false;
+    turnipAllocation = null;
+    render();
+    return;
+  }
+
+  const allocation = readTurnipAllocationInputs();
+  if (!allocation) {
+    globalThis.alert("Allocation percentages must be non-negative and add up to exactly 100.");
+    return;
+  }
+
+  turnipAllocation = allocation;
+  turnipArmed = true;
+  render();
+});
+
+railroadNameEl.addEventListener("click", () => {
+  const state = game.getState();
+  if (state.gameOver) {
+    return;
+  }
+
+  const input = globalThis.prompt(
+    "Rename railroad (cost: $10,000). Enter a custom name, or leave blank / type /random for a random generated name.",
+    state.railroadName,
+  );
+
+  if (input === null) {
+    return;
+  }
+
+  const trimmed = input.trim();
+  const useRandom = trimmed.length === 0 || trimmed.toLowerCase() === "/random";
+  const outcome = useRandom ? game.renameRailroad() : game.renameRailroad(trimmed);
+
+  if (!outcome.ok) {
+    globalThis.alert(outcome.message);
+  }
+
+  render();
 });
 
 render();
