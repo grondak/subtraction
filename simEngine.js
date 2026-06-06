@@ -79,6 +79,8 @@ const INFRA_COST_MULTIPLIER = 0.4;
 const FREIGHT_REVENUE_MULTIPLIER = 2;
 const RAILROAD_RENAME_COST = 10000;
 const TURNIP_SQUEEZE_AMOUNT = 50000;
+const LOCOMOTIVE_BASE_CAR_CAPACITY = 980;
+const EMERGENCY_LOCO_CAR_BOOST = 220;
 
 const SLUSH_ACTIVITIES = [
   { id: "yacht", name: "Build That Yacht!", target: 400000 },
@@ -396,6 +398,44 @@ function applyRepairGainWithDiminishingReturns(branch, nominalGain) {
   return nominalGain;
 }
 
+function estimateLocomotiveCapacity(state) {
+  const powerCapacity = LOCOMOTIVE_BASE_CAR_CAPACITY + state.emergencyLeaseUnits * EMERGENCY_LOCO_CAR_BOOST;
+  const crewFactor = clamp(0.72 + state.morale / 220, 0.5, 1.15);
+  const serviceFactor = clamp(0.55 + state.serviceCapacity / 200, 0.45, 1.1);
+  return Math.max(120, Math.round(powerCapacity * crewFactor * serviceFactor));
+}
+
+function applyLocomotiveCapacityCap(state, movedByBranch, totalMoved) {
+  const locomotiveCapacity = estimateLocomotiveCapacity(state);
+  state.locomotiveCapacity = locomotiveCapacity;
+
+  if (totalMoved <= locomotiveCapacity) {
+    return { movedByBranch, totalMoved };
+  }
+
+  const ratio = locomotiveCapacity / totalMoved;
+  const entries = Object.entries(movedByBranch).map(([key, moved]) => {
+    const scaled = moved * ratio;
+    const assigned = Math.floor(scaled);
+    return { key, assigned, fractional: scaled - assigned };
+  });
+
+  let assignedTotal = entries.reduce((sum, entry) => sum + entry.assigned, 0);
+  let remainder = locomotiveCapacity - assignedTotal;
+  entries.sort((a, b) => b.fractional - a.fractional);
+
+  for (const entry of entries) {
+    if (remainder <= 0) {
+      break;
+    }
+    entry.assigned += 1;
+    remainder -= 1;
+  }
+
+  const cappedByBranch = Object.fromEntries(entries.map((entry) => [entry.key, entry.assigned]));
+  return { movedByBranch: cappedByBranch, totalMoved: locomotiveCapacity };
+}
+
 function marketBaseline(state) {
   const economy = currentEconomy(state);
   const lanes = state.branches.map((branch) => {
@@ -572,6 +612,7 @@ function baseState() {
     disruptionPenalty: 0,
     monthlyWearModifier: 0,
     emergencyLeaseUnits: 0,
+    locomotiveCapacity: LOCOMOTIVE_BASE_CAR_CAPACITY,
     lowTrafficMonths: 0,
     slushFund: 0,
     slushActivities: createSlushActivities(),
@@ -585,6 +626,7 @@ function baseState() {
 
   recalcLineMiles(state);
   recalcTrackCondition(state);
+  state.locomotiveCapacity = estimateLocomotiveCapacity(state);
   return state;
 }
 
@@ -599,6 +641,7 @@ function snapshotRow(state) {
     covenantLimitCash: state.covenantCashLimit,
     monthsToCovenant: estimateMonthsToCovenant(state),
     carloads: state.carloads,
+    locomotiveCapacity: state.locomotiveCapacity,
     serviceCapacity: Math.round(state.serviceCapacity),
     trackCondition: state.trackCondition,
     morale: state.morale,
@@ -988,6 +1031,16 @@ function applyMonthlyDrag(state) {
     movedByBranch[lane.key] = laneMoved;
   }
 
+  const capped = applyLocomotiveCapacityCap(state, movedByBranch, movedCars);
+  movedCars = capped.totalMoved;
+  for (const lane of state.market.lanes) {
+    if (lane.status === "Abandoned") {
+      lane.movedCars = 0;
+      continue;
+    }
+    lane.movedCars = capped.movedByBranch[lane.key] ?? 0;
+  }
+
   updateCustomerViability(state);
 
   const monthlyRate = state.pricePerCarload;
@@ -1010,7 +1063,7 @@ function applyMonthlyDrag(state) {
       };
     }
 
-    const movedCarsForBranch = movedByBranch[liveBranch.key] ?? 0;
+    const movedCarsForBranch = capped.movedByBranch[liveBranch.key] ?? 0;
     const totalCost = sumCosts(liveBranch.costs);
     const revenue = Math.round(movedCarsForBranch * monthlyRate * FREIGHT_REVENUE_MULTIPLIER * (liveBranch.revenueFactor ?? 1));
     const profit = revenue - totalCost + tierProfitAdjustment(liveBranch.profitabilityTier);
@@ -1286,7 +1339,13 @@ export function createGame() {
 
   function getActions() {
     const dynamicBranchActions = state.branches.flatMap((branch) => branchActionSet(branch));
-    return [...dynamicBranchActions, ...CORPORATE_ACTIONS];
+    const availableCorporateActions = CORPORATE_ACTIONS.filter((action) => {
+      if (action.id === "return-locomotives") {
+        return state.emergencyLeaseUnits > 0;
+      }
+      return true;
+    });
+    return [...dynamicBranchActions, ...availableCorporateActions];
   }
 
   return {

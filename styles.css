@@ -193,6 +193,10 @@ body {
   background: rgba(31, 72, 110, 0.08);
 }
 
+.snapshot-table .col-loco-cap {
+  background: rgba(39, 95, 124, 0.1);
+}
+
 .snapshot-table .col-track,
 .snapshot-table .col-service,
 .snapshot-table .col-morale,

@@ -126,6 +126,7 @@ function renderStats(state) {
           <td class="col-covenant">$${row.covenantLimitCash.toLocaleString()}</td>
           <td class="col-covenant-runway">${formatMonthsToCovenant(row.monthsToCovenant)}</td>
           <td class="col-carloads">${row.carloads.toLocaleString()}</td>
+          <td class="col-loco-cap">${row.locomotiveCapacity.toLocaleString()}</td>
           <td class="col-service">${row.serviceCapacity}%</td>
           <td class="col-track ${statClass("trackCondition", row.trackCondition)}">${row.trackCondition}%</td>
           <td class="col-morale ${statClass("morale", row.morale)}">${row.morale}%</td>

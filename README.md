@@ -31,6 +31,8 @@ No build tools are required.
 - Each month you can choose targeted branch actions: maintain, repair, or abandon.
 - Corporate controls now include paired opposites: raise/drop rates, defer/perform system maintenance, lease/return emergency locomotives, and cut/increase crew overtime.
 - Service capacity is an explicit network stat that decays every month and is restored by system maintenance actions.
+- Locomotive capacity is now an explicit monthly throughput cap layered on top of demand, service, condition, and crew effects.
+- Leasing emergency locomotives increases locomotive capacity, while return actions are only available when leased units are active.
 - A supplemental side-action, `Add to Slush Fund (Squeeze the Turnip)`, can be applied once per month in addition to the selected primary action.
 - Slush fund allocation is split across five luxury projects each month you arm it, and percentages must total `100`.
 - Slush achievements trigger mini-party events at these thresholds: `Wild Party` ($10k), `Social Media-Fired Vacation Around the World` ($50k), `Three-Car Garage` ($100k), `Buy That Race Car` ($200k), and `Build That Yacht!` ($400k).
@@ -49,7 +51,7 @@ No build tools are required.
 
 ## Key Dashboards
 
-- `Company Snapshot`: month, cash, slush fund, debt, debt service next month, loan rate, covenant limit, months to covenant, moved carloads, service capacity, and operating condition indicators.
+- `Company Snapshot`: month, cash, slush fund, debt, debt service next month, loan rate, covenant limit, months to covenant, moved carloads, locomotive capacity, service capacity, and operating condition indicators.
 - `Current Month Badge`: live month indicator that starts at Month 2 after baseline seeding and advances each submitted turn.
 - `Company Cost Ledger`: monthly expenditure breakout plus revenue and operating balance.
 - `Observe and Orient`: lane-level demand, moved cars, unserved cars, and service rate.
@@ -76,6 +78,13 @@ Site URL format:
 Because all assets are relative paths (`./game.js`, `./styles.css`), no base-path rewrite is required.
 
 ## Change History
+
+### 2026-06 Locomotive Capacity + Lease Action Gating
+
+- Added explicit locomotive capacity as a monthly throughput bottleneck in movement calculations.
+- Wired emergency locomotive leases to increase capacity while preserving lease/debt drag.
+- Added `Loco Capacity` to the Company Snapshot table.
+- Gated the `Return Emergency Locomotives` action so it appears only when leased units are currently active.
 
 ### 2026-06 Slush Fund + UX Update
 
