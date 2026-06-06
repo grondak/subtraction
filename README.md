@@ -10,9 +10,11 @@ No build tools are required.
 2. Optionally arm `Squeeze the Turnip (take out $50k for yourself this month)`.
 3. Click one primary action each month.
 4. The turnip action (if armed) applies in addition to your primary action.
-5. Watch the company snapshot table grow one row per month.
-6. Track Observe/Orient signals in the monthly market table: economy grade plus shipper and receiver lane pressure.
-7. Try to trigger one of the failure outcomes before month 25.
+5. The game auto-runs a baseline month before your first decision so initial revenue and branch economics are visible.
+6. Watch the company snapshot table grow one row per month.
+7. First actionable turn starts in Month 2 after baseline seeding.
+8. Track Observe/Orient signals in the monthly market table: economy grade plus shipper and receiver lane pressure.
+9. Try to trigger one of the failure outcomes before month 25.
 
 ## Game Model
 
@@ -45,10 +47,10 @@ No build tools are required.
 ## Key Dashboards
 
 - `Company Snapshot`: month, cash, slush fund, debt, debt service next month, loan rate, covenant limit, months to covenant, moved carloads, service capacity, and operating condition indicators.
-- `Current Month Badge`: live month indicator that advances immediately when a turn is submitted.
+- `Current Month Badge`: live month indicator that starts at Month 2 after baseline seeding and advances each submitted turn.
 - `Company Cost Ledger`: monthly expenditure breakout plus revenue and operating balance.
 - `Observe and Orient`: lane-level demand, moved cars, unserved cars, and service rate.
-- `Branch Infrastructure Ledger`: monthly group with branch sub-rows for status, costs, profit, and margin.
+- `Branch Infrastructure Ledger`: monthly group with branch sub-rows for status, revenue, cost, profit, and margin.
 
 ## GitHub Pages
 
@@ -95,6 +97,12 @@ Because all assets are relative paths (`./game.js`, `./styles.css`), no base-pat
 - Added per-month service capacity deterioration to represent network wear and congestion drag.
 - Wired maintenance policy actions into capacity recovery/decline behavior.
 - Updated movement/service calculations to use service capacity as a core throughput driver.
+
+### 2026-06 Baseline Visibility Update
+
+- Added automatic Month 1 baseline pre-simulation before player decisions.
+- Seeded opening dashboards with real branch financial outcomes instead of zeroed startup rows.
+- Updated branch ledger detail columns to show Revenue / Cost / Profit explicitly.
 
 ## License
 

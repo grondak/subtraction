@@ -138,16 +138,20 @@ function renderCosts(state) {
     .join("");
 }
 
-function branchCostCell(branch) {
-  if (!branch) {
+function branchRevenueCell(branch) {
+  if (branch?.status !== "active") {
     return "-";
   }
 
-  if (branch.status === "abandoned") {
-    return "Abandoned";
+  return moneyCell(branch.revenue);
+}
+
+function branchTotalCostCell(branch) {
+  if (branch?.status !== "active") {
+    return "-";
   }
 
-  return `Rail $${branch.costs.rail.toLocaleString()} | Roadbed $${branch.costs.roadbed.toLocaleString()} | Crossings $${branch.costs.crossings.toLocaleString()} | Spurs $${branch.costs.spurs.toLocaleString()} | Bumpers $${branch.costs.bumpers.toLocaleString()}`;
+  return moneyCell(-branch.totalCost);
 }
 
 function moneyCell(value) {
@@ -233,7 +237,8 @@ function renderBranchLedger(state) {
               ${monthSummary}
               <td>${branch?.name ?? "-"}</td>
               <td>${branchStatusLabel(branch)}</td>
-              <td>${branchCostCell(branch)}</td>
+              <td>${branchRevenueCell(branch)}</td>
+              <td>${branchTotalCostCell(branch)}</td>
               <td>${branch ? moneyCell(branch.profit) : "-"}</td>
               <td>${marginCell(branch)}</td>
               ${totals}

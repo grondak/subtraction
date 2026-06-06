@@ -960,12 +960,32 @@ function branchActionSet(branch) {
   ];
 }
 
-export function createGame() {
-  let state = baseState();
+function initializeWithBaselineMonth(state) {
+  state.report =
+    "Baseline month auto-ran to seed revenue visibility. Review branch Revenue / Cost / Profit before choosing Month 2 actions.";
+
   state.market = marketBaseline(state);
+  applyMonthlyDrag(state);
+
   writeHistoryRow(state);
   writeCostRow(state);
   writeMarketRow(state);
+
+  state.log.unshift(
+    `Month ${state.month} baseline (${state.market.economy} economy): network operated with no policy intervention to establish reference performance.`,
+  );
+
+  state.month += 1;
+  maybeShiftEconomy(state);
+  state.currentMarketRateMonthly = marketRateForEconomy(state.economyIndex);
+  state.market = marketBaseline(state);
+  state.log.unshift(`Month ${state.month} opens with cash at $${state.cash.toLocaleString()}.`);
+  state.log = state.log.slice(0, 24);
+}
+
+export function createGame() {
+  let state = baseState();
+  initializeWithBaselineMonth(state);
 
   function step(actionId, options = {}) {
     if (state.gameOver) {
@@ -1013,10 +1033,7 @@ export function createGame() {
 
   function reset() {
     state = baseState();
-    state.market = marketBaseline(state);
-    writeHistoryRow(state);
-    writeCostRow(state);
-    writeMarketRow(state);
+    initializeWithBaselineMonth(state);
     return state;
   }
 
