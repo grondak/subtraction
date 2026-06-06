@@ -75,6 +75,9 @@ const ECONOMY_STATES = [
   { label: "Terrific", multiplier: 1.28 },
 ];
 
+const INFRA_COST_MULTIPLIER = 0.4;
+const FREIGHT_REVENUE_MULTIPLIER = 2;
+
 const BRANCH_TEMPLATES = [
   {
     key: "timber-branch",
@@ -82,6 +85,8 @@ const BRANCH_TEMPLATES = [
     miles: 22,
     shipper: "Pine Ridge Logging",
     receiver: "North River Paper Mill",
+    profitabilityTier: "profitable",
+    revenueFactor: 1.2,
     shipperBase: 380,
     receiverBase: 360,
     costs: {
@@ -98,6 +103,8 @@ const BRANCH_TEMPLATES = [
     miles: 18,
     shipper: "Valley Grain Cooperative",
     receiver: "Riverside Feed Mill",
+    profitabilityTier: "marginal",
+    revenueFactor: 1,
     shipperBase: 290,
     receiverBase: 280,
     costs: {
@@ -114,6 +121,8 @@ const BRANCH_TEMPLATES = [
     miles: 18,
     shipper: "Granite Spur Quarry",
     receiver: "Metro Cement Terminal",
+    profitabilityTier: "marginal",
+    revenueFactor: 0.98,
     shipperBase: 260,
     receiverBase: 250,
     costs: {
@@ -130,6 +139,8 @@ const BRANCH_TEMPLATES = [
     miles: 9,
     shipper: "Prairie Crude Transload",
     receiver: "Gulf River Refinery",
+    profitabilityTier: "profitable",
+    revenueFactor: 1.18,
     shipperBase: 210,
     receiverBase: 205,
     costs: {
@@ -146,6 +157,8 @@ const BRANCH_TEMPLATES = [
     miles: 8,
     shipper: "Cedar Ridge Sawmill",
     receiver: "North River Paper Mill",
+    profitabilityTier: "losing",
+    revenueFactor: 0.64,
     shipperBase: 190,
     receiverBase: 185,
     costs: {
@@ -162,6 +175,8 @@ const BRANCH_TEMPLATES = [
     miles: 7,
     shipper: "MidState Chemical Works",
     receiver: "Riverbend Chemical Plant",
+    profitabilityTier: "losing",
+    revenueFactor: 0.58,
     shipperBase: 170,
     receiverBase: 165,
     costs: {
@@ -183,7 +198,7 @@ function clamp(value, min, max) {
 }
 
 function sumCosts(costs) {
-  return costs.rail + costs.roadbed + costs.crossings + costs.spurs + costs.bumpers;
+  return Math.round((costs.rail + costs.roadbed + costs.crossings + costs.spurs + costs.bumpers) * INFRA_COST_MULTIPLIER);
 }
 
 function currentEconomy(state) {
@@ -196,6 +211,8 @@ function createBranches() {
     costs: { ...template.costs },
     status: "active",
     condition: randomInt(62, 82),
+    profitabilityTier: template.profitabilityTier,
+    revenueFactor: template.revenueFactor,
     customerHealth: randomInt(64, 84),
     customerStatus: "stable",
   }));
@@ -286,6 +303,7 @@ function marketBaseline(state) {
       condition: branch.condition,
       customerHealth: branch.customerHealth,
       customerStatus: branch.customerStatus,
+      profitabilityTier: branch.profitabilityTier,
       costs: { ...branch.costs },
       totalCost: sumCosts(branch.costs),
       revenue: 0,
@@ -341,6 +359,16 @@ function estimateMonthsToCovenant(state) {
   return Math.ceil(gap / burn);
 }
 
+function tierProfitAdjustment(tier) {
+  if (tier === "profitable") {
+    return 12000;
+  }
+  if (tier === "losing") {
+    return -18000;
+  }
+  return 0;
+}
+
 function emptyCostRow(month) {
   return {
     month,
@@ -363,11 +391,12 @@ function baseState() {
     cash: 2450000,
     debt: 1200000,
     carloads: 920,
+    serviceCapacity: 80,
     trackCondition: 76,
     morale: 68,
     confidence: 64,
     lineMiles: 58,
-    covenantCashLimit: -850000,
+    covenantCashLimit: -2500000,
     economyIndex: 2,
     monthsToEconomyShift: randomInt(4, 6),
     gameOver: false,
@@ -384,6 +413,7 @@ function baseState() {
     monthlyWearModifier: 0,
     emergencyLeaseUnits: 0,
     lowTrafficMonths: 0,
+    slushFund: 0,
     loanInterestRateMonthly: 0.0125,
     currentMarketRateMonthly: 0.012,
     monthlyCosts: emptyCostRow(1),
@@ -401,12 +431,14 @@ function snapshotRow(state) {
   return {
     month: state.month,
     cash: state.cash,
+    slushFund: state.slushFund,
     debt: state.debt,
     debtServiceNextMonth: nextMonthDebtService(state),
     loanRatePct: state.loanInterestRateMonthly * 100,
     covenantLimitCash: state.covenantCashLimit,
     monthsToCovenant: estimateMonthsToCovenant(state),
     carloads: state.carloads,
+    serviceCapacity: Math.round(state.serviceCapacity),
     trackCondition: state.trackCondition,
     morale: state.morale,
     confidence: state.confidence,
@@ -538,12 +570,14 @@ function applyCorporateAction(state, actionId) {
     case "defer-system-maintenance":
       state.cash += 170000;
       state.monthlyWearModifier += 1.4;
+      state.serviceCapacity -= randomInt(2, 4);
       state.confidence -= randomInt(3, 6);
       state.disruptionPenalty += 0.03;
       return "System maintenance was deferred. This month will run rougher than usual.";
     case "perform-system-maintenance":
       state.cash -= 230000;
       state.monthlyWearModifier -= 1.2;
+      state.serviceCapacity += randomInt(6, 10);
       for (const branch of activeBranches(state)) {
         branch.condition += randomInt(3, 7);
       }
@@ -624,10 +658,11 @@ function applyAction(state, actionId) {
 }
 
 function applyTurnipSqueeze(state) {
-  state.cash += 50000;
+  state.cash -= 50000;
+  state.slushFund += 50000;
   state.confidence -= randomInt(1, 2);
   state.morale -= randomInt(1, 2);
-  return "Owners squeezed the turnip for $50,000 of extra cash.";
+  return "Owners squeezed the turnip: $50,000 was diverted to the private slush fund.";
 }
 
 function customerStatusFromHealth(health) {
@@ -711,7 +746,12 @@ function applyMonthlyDrag(state) {
     state.report += ` Crew shortages delayed trains and burned $${strikeLoss.toLocaleString()} in extra costs.`;
   }
 
-  const networkBaseService = (state.trackCondition * 0.42 + state.morale * 0.3 + state.confidence * 0.28) / 100;
+  const monthlyCapacityDecay =
+    1.7 + Math.max(0, state.disruptionPenalty) * 8 + Math.max(0, (70 - state.trackCondition) * 0.03);
+  state.serviceCapacity -= monthlyCapacityDecay;
+
+  const operationalQuality = (state.trackCondition * 0.4 + state.morale * 0.32 + state.confidence * 0.28) / 100;
+  const networkBaseService = state.serviceCapacity / 100 * 0.72 + operationalQuality * 0.28;
   const serviceFactor = clamp(networkBaseService - state.disruptionPenalty, 0.2, 1.05);
 
   let movedCars = 0;
@@ -724,9 +764,10 @@ function applyMonthlyDrag(state) {
     }
 
     const branch = findBranch(state, lane.key);
-    const branchFactor = branch ? clamp(branch.condition / 100, 0.28, 1.02) : 0.2;
+    const branchAdjustment = branch ? (branch.condition - 70) / 350 : -0.08;
+    const laneService = clamp(serviceFactor + branchAdjustment, 0.2, 1.05);
     const laneMoved = clamp(
-      Math.round(lane.offeredCars * serviceFactor * branchFactor) + randomInt(-8, 8),
+      Math.round(lane.offeredCars * laneService) + randomInt(-8, 8),
       0,
       lane.offeredCars,
     );
@@ -749,6 +790,7 @@ function applyMonthlyDrag(state) {
         condition: liveBranch.condition,
         customerHealth: liveBranch.customerHealth,
         customerStatus: liveBranch.customerStatus,
+        profitabilityTier: liveBranch.profitabilityTier,
         costs: { ...liveBranch.costs },
         totalCost: sumCosts(liveBranch.costs),
         revenue: 0,
@@ -758,8 +800,8 @@ function applyMonthlyDrag(state) {
 
     const movedCarsForBranch = movedByBranch[liveBranch.key] ?? 0;
     const totalCost = sumCosts(liveBranch.costs);
-    const revenue = Math.round(movedCarsForBranch * monthlyRate);
-    const profit = revenue - totalCost;
+    const revenue = Math.round(movedCarsForBranch * monthlyRate * FREIGHT_REVENUE_MULTIPLIER * (liveBranch.revenueFactor ?? 1));
+    const profit = revenue - totalCost + tierProfitAdjustment(liveBranch.profitabilityTier);
     totalRevenue += revenue;
     totalBranchProfit += profit;
     return {
@@ -769,6 +811,7 @@ function applyMonthlyDrag(state) {
       condition: liveBranch.condition,
       customerHealth: liveBranch.customerHealth,
       customerStatus: liveBranch.customerStatus,
+      profitabilityTier: liveBranch.profitabilityTier,
       costs: { ...liveBranch.costs },
       totalCost,
       revenue,
@@ -804,6 +847,7 @@ function applyMonthlyDrag(state) {
   recalcTrackCondition(state);
 
   state.trackCondition = clamp(state.trackCondition, 0, 100);
+  state.serviceCapacity = clamp(state.serviceCapacity, 20, 100);
   state.morale = clamp(state.morale, 0, 100);
   state.confidence = clamp(state.confidence, 0, 100);
   state.disruptionPenalty = clamp(state.disruptionPenalty * 0.5, -0.12, 0.24);
@@ -855,6 +899,38 @@ function evaluateEnding(state) {
   }
 
   return "";
+}
+
+function determineVerdict(state) {
+  const extractionRatio = state.slushFund / Math.max(1, state.slushFund + Math.max(state.cash, 0));
+
+  if (state.result === "Barely Solvent") {
+    return extractionRatio >= 0.18 ? "Cowardly Solvency" : "Stewardship Failure";
+  }
+
+  if (state.result === "Receivership") {
+    if (state.slushFund >= 400000) {
+      return "Fast Strip-Mine";
+    }
+    return "Bridge-Funded Poverty";
+  }
+
+  if (state.result === "No Service Territory" || state.result === "Traffic Collapse") {
+    if (state.slushFund >= 300000) {
+      return "Catastrophic Harvest";
+    }
+    return "Stewardship Failure";
+  }
+
+  if (state.result === "FRA Shutdown") {
+    return state.slushFund >= 250000 ? "Catastrophic Harvest" : "Stewardship Failure";
+  }
+
+  if (state.slushFund >= 450000) {
+    return "Fast Strip-Mine";
+  }
+
+  return "Clean Extraction";
 }
 
 function branchActionSet(branch) {
@@ -918,8 +994,11 @@ export function createGame() {
     writeMarketRow(state);
 
     if (ending) {
-      state.report += ` ${ending}`;
-      state.log.unshift(`Final: ${state.result} - ${ending}`);
+      const verdict = determineVerdict(state);
+      const slushLine = `Slush fund extracted: $${state.slushFund.toLocaleString()}.`;
+      const verdictLine = `Verdict: ${verdict}.`;
+      state.report += ` ${ending} ${slushLine} ${verdictLine}`;
+      state.log.unshift(`Final: ${state.result} - ${ending} ${slushLine} ${verdictLine}`);
     } else {
       state.month += 1;
       maybeShiftEconomy(state);

@@ -55,12 +55,14 @@ function renderStats(state) {
         <tr>
           <td class="col-month">${monthLabel(row.month)}</td>
           <td class="col-cash ${statClass("cash", row.cash)}">$${row.cash.toLocaleString()}</td>
+          <td class="col-slush">$${row.slushFund.toLocaleString()}</td>
           <td class="col-debt">$${row.debt.toLocaleString()}</td>
           <td class="col-debt-service">$${row.debtServiceNextMonth.toLocaleString()}</td>
           <td class="col-loan-rate">${row.loanRatePct.toFixed(2)}%</td>
           <td class="col-covenant">$${row.covenantLimitCash.toLocaleString()}</td>
           <td class="col-covenant-runway">${formatMonthsToCovenant(row.monthsToCovenant)}</td>
           <td class="col-carloads">${row.carloads.toLocaleString()}</td>
+          <td class="col-service">${row.serviceCapacity}%</td>
           <td class="col-track ${statClass("trackCondition", row.trackCondition)}">${row.trackCondition}%</td>
           <td class="col-morale ${statClass("morale", row.morale)}">${row.morale}%</td>
           <td class="col-confidence ${statClass("confidence", row.confidence)}">${row.confidence}%</td>

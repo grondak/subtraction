@@ -27,6 +27,7 @@ No build tools are required.
 	- `Chemical Plant Spur`
 - Each month you can choose targeted branch actions: maintain, repair, or abandon.
 - Corporate controls now include paired opposites: raise/drop rates, defer/perform system maintenance, lease/return emergency locomotives, and cut/increase crew overtime.
+- Service capacity is an explicit network stat that decays every month and is restored by system maintenance actions.
 - A supplemental side-action, `Squeeze the Turnip`, can be applied once per month in addition to the selected primary action.
 - Jumbo loan controls include principal paydown and rate renegotiation to the current market rate.
 - Abandoning a branch removes service for that branch's shipper and receiver.
@@ -43,7 +44,7 @@ No build tools are required.
 
 ## Key Dashboards
 
-- `Company Snapshot`: month, cash, debt, debt service next month, loan rate, covenant limit, months to covenant, moved carloads, and operating condition indicators.
+- `Company Snapshot`: month, cash, slush fund, debt, debt service next month, loan rate, covenant limit, months to covenant, moved carloads, service capacity, and operating condition indicators.
 - `Current Month Badge`: live month indicator that advances immediately when a turn is submitted.
 - `Company Cost Ledger`: monthly expenditure breakout plus revenue and operating balance.
 - `Observe and Orient`: lane-level demand, moved cars, unserved cars, and service rate.
@@ -87,6 +88,13 @@ Because all assets are relative paths (`./game.js`, `./styles.css`), no base-pat
 - Added monthly cost ledger for visible expenditures.
 - Added supplemental side-action: Squeeze the Turnip (stackable with primary action).
 - Added GNU LGPL v3 license and GitHub Pages-ready static deployment setup.
+
+### 2026-06 Service Capacity Update
+
+- Added explicit `Service Capacity` to the simulation state and Company Snapshot.
+- Added per-month service capacity deterioration to represent network wear and congestion drag.
+- Wired maintenance policy actions into capacity recovery/decline behavior.
+- Updated movement/service calculations to use service capacity as a core throughput driver.
 
 ## License
 
