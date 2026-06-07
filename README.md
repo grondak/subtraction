@@ -7,7 +7,7 @@ A static web game where you run a shortline freight railroad into collapse.
 No build tools are required.
 
 1. Open `index.html` for the briefing/strategy page, then click through to `game.html`.
-2. Optionally arm `Add to Slush Fund (Squeeze the Turnip)` to divert $50k for yourself this month.
+2. Enter a squeeze amount in the slush panel, then arm `Arm Squeeze` to divert that amount for yourself this month. The default is $50k.
 3. Click one primary action each month.
 4. The slush fund action (if armed) applies in addition to your primary action.
 5. Slush allocation percentages must be non-negative and add up to exactly `100`.
@@ -35,7 +35,9 @@ No build tools are required.
 - Leasing emergency locomotives increases locomotive capacity, while return actions are only available when leased units are active.
 - A supplemental side-action, `Add to Slush Fund (Squeeze the Turnip)`, can be applied once per month in addition to the selected primary action.
 - Slush fund allocation is split across five luxury projects each month you arm it, and percentages must total `100`.
+- The squeeze amount is user-entered and defaults to $50k; the button itself now lives inside the slush allocation panel.
 - Slush achievements trigger mini-party events at these thresholds: `Wild Party` ($10k), `Social Media-Fired Vacation Around the World` ($50k), `Three-Car Garage` ($100k), `Buy That Race Car` ($200k), and `Build That Yacht!` ($400k).
+- Luxury unlocks now add flavor text and CEO lifestyle score instead of a generic morale hit.
 - Jumbo loan controls include principal paydown and rate renegotiation to the current market rate.
 - Abandoning a branch removes service for that branch's shipper and receiver.
 - Lane pressure and moved cars are logged in row-per-month format.
@@ -54,10 +56,11 @@ No build tools are required.
 - `Company Snapshot`: month, cash, slush fund, debt, debt service next month, loan rate, covenant limit, months to covenant, moved carloads, locomotive capacity, service capacity, and operating condition indicators.
 - `Current Month Badge`: live month indicator that starts at Month 2 after baseline seeding and advances each submitted turn.
 - `Company Cost Ledger`: monthly expenditure breakout plus revenue and operating balance.
-- `Observe and Orient`: lane-level demand, moved cars, unserved cars, and service rate.
+- `External Factors`: lane-level demand, moved cars, unserved cars, and service rate.
 - `Branch Infrastructure Ledger`: monthly group with branch sub-rows for status, revenue, cost, profit, and margin.
 - `Slush Fund Activities`: five progress tracks with allocation percentages and achievement unlocks.
 - Ledger tables are viewport-capped to keep horizontal scrollbars nearby, with in-panel vertical scrolling after 3 rows (or 3 month groups in branch ledger).
+- The slush panel now includes the squeeze amount input and the arm button, so the action label stays simple.
 
 ## GitHub Pages
 
@@ -90,6 +93,14 @@ The repo includes the corresponding license texts alongside the binaries.
 - Wired emergency locomotive leases to increase capacity while preserving lease/debt drag.
 - Added `Loco Capacity` to the Company Snapshot table.
 - Gated the `Return Emergency Locomotives` action so it appears only when leased units are currently active.
+
+### 2026-06 Slush Amount + Labor Consequences Update
+
+- Allowed the slush squeeze amount to be user-entered, with $50k as the default.
+- Moved the arm button into the slush allocation panel and simplified its label.
+- Added employee-facing consequences for burnout, quits, sabotage, unionization, and safety whistleblowing.
+- Clarified the payroll model: crew payroll is morale-driven and separate from policy spend.
+- Renamed the market panel to `External Factors` everywhere in the game UI.
 
 ### 2026-06 Slush Fund + UX Update
 

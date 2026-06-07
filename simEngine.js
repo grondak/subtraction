@@ -83,11 +83,46 @@ const LOCOMOTIVE_BASE_CAR_CAPACITY = 980;
 const EMERGENCY_LOCO_CAR_BOOST = 220;
 
 const SLUSH_ACTIVITIES = [
-  { id: "yacht", name: "Build That Yacht!", target: 400000 },
-  { id: "race-car", name: "Buy That Race Car", target: 200000 },
-  { id: "garage", name: "Three-Car Garage", target: 100000 },
-  { id: "vacation", name: "Social Media-Fired Vacation Around the World", target: 50000 },
-  { id: "wild-party", name: "Wild Party", target: 10000 },
+  {
+    id: "yacht",
+    name: "Build That Yacht!",
+    target: 400000,
+    lifestylePoints: 50,
+    unlockFlavor:
+      "The marina calls with mooring dimensions and a champagne-colored hull mockup. Executive status has clearly outgrown land.",
+  },
+  {
+    id: "race-car",
+    name: "Buy That Race Car",
+    target: 200000,
+    lifestylePoints: 40,
+    unlockFlavor:
+      "A track-day coordinator books your first closed-course slot. The garage starts smelling like money and hot brakes.",
+  },
+  {
+    id: "garage",
+    name: "Three-Car Garage",
+    target: 100000,
+    lifestylePoints: 30,
+    unlockFlavor:
+      "The third bay gets its own keypad and lighting scheme. Ownership has become architectural.",
+  },
+  {
+    id: "vacation",
+    name: "Social Media-Fired Vacation Around the World",
+    target: 50000,
+    lifestylePoints: 20,
+    unlockFlavor:
+      "The out-of-office message becomes a small travel empire. Passport stamps begin to outpace waybills.",
+  },
+  {
+    id: "wild-party",
+    name: "Wild Party",
+    target: 10000,
+    lifestylePoints: 10,
+    unlockFlavor:
+      "A rooftop party erupts into the kind of story that follows an executive for years and improves their self-image immediately.",
+  },
 ];
 
 const RAILROAD_NAME_PARTS_FIRST = [
@@ -436,6 +471,149 @@ function applyLocomotiveCapacityCap(state, movedByBranch, totalMoved) {
   return { movedByBranch: cappedByBranch, totalMoved: locomotiveCapacity };
 }
 
+function employeePressureScore(state, movedCars, serviceFactor) {
+  const workloadRatio = movedCars / Math.max(1, state.locomotiveCapacity);
+  const moraleDrag = (100 - state.morale) / 100;
+  const confidenceDrag = (100 - state.confidence) / 100;
+  const serviceDrag = (100 - state.serviceCapacity) / 100;
+  const overworkDrag = clamp((workloadRatio - 0.75) * 1.5, 0, 0.35);
+  const safetyRelief = state.safetyScrutinyMonths > 0 ? 0.08 : 0;
+  return clamp(moraleDrag * 0.38 + confidenceDrag * 0.24 + serviceDrag * 0.2 + (1 - serviceFactor) * 0.1 + overworkDrag - safetyRelief, 0, 1);
+}
+
+function applySafetyScrutinyTick(state) {
+  if (state.safetyScrutinyMonths <= 0) {
+    return null;
+  }
+
+  state.safetyScrutinyMonths -= 1;
+  state.confidence += randomInt(1, 3);
+  return "Safety scrutiny forced extra inspections and calmed some crew complaints.";
+}
+
+function maybeApplyUnionization(state, pressure) {
+  if (state.unionized || (state.morale >= 60 && pressure <= 0.45)) {
+    return null;
+  }
+
+  const unionChance = clamp(0.08 + pressure * 0.14 + (60 - state.morale) / 240, 0.04, 0.26);
+  if (Math.random() >= unionChance) {
+    return null;
+  }
+
+  state.unionized = true;
+  state.morale += randomInt(2, 5);
+  state.confidence += randomInt(1, 3);
+  state.disruptionPenalty += 0.02;
+  return "Crew voted to unionize. Work rules tightened, wages will run hotter, and management lost some flexibility.";
+}
+
+function maybeApplyBurnout(state, pressure) {
+  if (state.morale >= 58 || pressure <= 0.3) {
+    return null;
+  }
+
+  const burnoutChance = clamp(0.06 + pressure * 0.22 + (58 - state.morale) / 220, 0.05, 0.28);
+  if (Math.random() >= burnoutChance) {
+    return null;
+  }
+
+  state.morale -= randomInt(2, 5);
+  state.confidence -= randomInt(1, 3);
+  state.disruptionPenalty += 0.02;
+  return "Crew burnout set in. Fatigue spread through the roster and the dispatcher started fighting small failures all month.";
+}
+
+function maybeApplyQuits(state, pressure) {
+  if (state.morale >= 45 || pressure <= 0.35) {
+    return null;
+  }
+
+  const quitChance = clamp(0.05 + pressure * 0.2 + (45 - state.morale) / 180, 0.04, 0.24);
+  if (Math.random() >= quitChance) {
+    return null;
+  }
+
+  const tempLaborCost = randomInt(40000, 90000);
+  state.cash -= tempLaborCost;
+  state.serviceCapacity -= randomInt(2, 5);
+  state.morale -= randomInt(3, 6);
+  state.confidence -= randomInt(2, 4);
+  return `A handful of employees quit. Overtime and temp labor cost $${tempLaborCost.toLocaleString()} just to keep the railroad moving.`;
+}
+
+function maybeApplyWhistleblower(state) {
+  if (state.trackCondition >= 62 || state.confidence >= 58) {
+    return null;
+  }
+
+  const whistleblowerChance = clamp(0.06 + (62 - state.trackCondition) / 180 + (58 - state.confidence) / 240, 0.05, 0.22);
+  if (Math.random() >= whistleblowerChance) {
+    return null;
+  }
+
+  const complianceCost = randomInt(25000, 65000);
+  state.cash -= complianceCost;
+  state.safetyScrutinyMonths = Math.max(state.safetyScrutinyMonths ?? 0, randomInt(2, 4));
+  state.confidence += randomInt(2, 4);
+  return `A safety whistleblower escalated issues to management. Inspections and remediation cost $${complianceCost.toLocaleString()} but forced the railroad to confront the worst risks.`;
+}
+
+function maybeApplySabotage(state, pressure) {
+  if (state.morale >= 40 || state.confidence >= 48) {
+    return null;
+  }
+
+  const sabotageChance = clamp(0.03 + pressure * 0.1 + (40 - state.morale) / 220 + (48 - state.confidence) / 260, 0.03, 0.16);
+  if (Math.random() >= sabotageChance) {
+    return null;
+  }
+
+  const sabotageCost = randomInt(60000, 130000);
+  state.cash -= sabotageCost;
+  state.disruptionPenalty += 0.06;
+  state.trackCondition -= randomInt(1, 4);
+  state.confidence -= randomInt(3, 6);
+  return `Sabotage hit dispatch and equipment. The railroad burned $${sabotageCost.toLocaleString()} cleaning up the damage.`;
+}
+
+function applyEmployeeConsequences(state, movedCars, serviceFactor) {
+  const pressure = employeePressureScore(state, movedCars, serviceFactor);
+  const notes = [];
+
+  const scrutinyNote = applySafetyScrutinyTick(state);
+  if (scrutinyNote) {
+    notes.push(scrutinyNote);
+  }
+
+  const unionNote = maybeApplyUnionization(state, pressure);
+  if (unionNote) {
+    notes.push(unionNote);
+  }
+
+  const burnoutNote = maybeApplyBurnout(state, pressure);
+  if (burnoutNote) {
+    notes.push(burnoutNote);
+  }
+
+  const quitNote = maybeApplyQuits(state, pressure);
+  if (quitNote) {
+    notes.push(quitNote);
+  }
+
+  const whistleblowerNote = maybeApplyWhistleblower(state);
+  if (whistleblowerNote) {
+    notes.push(whistleblowerNote);
+  }
+
+  const sabotageNote = maybeApplySabotage(state, pressure);
+  if (sabotageNote) {
+    notes.push(sabotageNote);
+  }
+
+  return notes;
+}
+
 function marketBaseline(state) {
   const economy = currentEconomy(state);
   const lanes = state.branches.map((branch) => {
@@ -615,7 +793,10 @@ function baseState() {
     locomotiveCapacity: LOCOMOTIVE_BASE_CAR_CAPACITY,
     lowTrafficMonths: 0,
     slushFund: 0,
+    ceoLifestyleScore: 0,
     slushActivities: createSlushActivities(),
+    unionized: false,
+    safetyScrutinyMonths: 0,
     loanInterestRateMonthly: 0.0125,
     currentMarketRateMonthly: 0.012,
     monthlyCosts: emptyCostRow(1),
@@ -635,6 +816,7 @@ function snapshotRow(state) {
     month: state.month,
     cash: state.cash,
     slushFund: state.slushFund,
+    ceoLifestyleScore: state.ceoLifestyleScore,
     debt: state.debt,
     debtServiceNextMonth: nextMonthDebtService(state),
     loanRatePct: state.loanInterestRateMonthly * 100,
@@ -865,25 +1047,38 @@ function applyAction(state, actionId) {
   return applyCorporateAction(state, actionId);
 }
 
-function applyTurnipSqueeze(state, allocationInput) {
+function applyTurnipSqueeze(state, allocationInput, amountInput) {
   const fractions = normalizedAllocation(state, allocationInput);
   if (!fractions) {
     return "Slush fund transfer canceled: allocation percentages must add up to exactly 100%.";
   }
 
-  state.cash -= TURNIP_SQUEEZE_AMOUNT;
-  state.slushFund += TURNIP_SQUEEZE_AMOUNT;
+  const amount = Number(amountInput);
+  if (!Number.isFinite(amount) || amount < 0) {
+    return "Slush fund transfer canceled: squeeze amount must be zero or greater.";
+  }
+
+  const squeezeAmount = Math.round(amount);
+
+  state.cash -= squeezeAmount;
+  state.slushFund += squeezeAmount;
   state.confidence -= randomInt(1, 2);
   state.morale -= randomInt(1, 2);
   const activities = state.slushActivities ?? [];
-  let remaining = TURNIP_SQUEEZE_AMOUNT;
+  const allocationSummary = activities
+    .map((activity) => {
+      const ratio = fractions[activity.id] ?? 0;
+      return `${activity.name} ${(ratio * 100).toFixed(0)}%`;
+    })
+    .join(" | ");
+  let remaining = squeezeAmount;
 
   for (let i = 0; i < activities.length; i += 1) {
     const activity = activities[i];
     const isLast = i === activities.length - 1;
     const allocation = isLast
       ? remaining
-      : Math.min(remaining, Math.round(TURNIP_SQUEEZE_AMOUNT * (fractions[activity.id] ?? 0)));
+      : Math.min(remaining, Math.round(squeezeAmount * (fractions[activity.id] ?? 0)));
     activity.funded += allocation;
     remaining -= allocation;
   }
@@ -893,26 +1088,28 @@ function applyTurnipSqueeze(state, allocationInput) {
     if (!activity.achieved && activity.funded >= activity.target) {
       activity.achieved = true;
       activity.achievedMonth = state.month;
-      unlocked.push(activity.name);
+      const lifestylePoints = activity.lifestylePoints ?? 0;
+      state.ceoLifestyleScore += lifestylePoints;
+      unlocked.push({
+        name: activity.name,
+        flavor: activity.unlockFlavor,
+        lifestylePoints,
+      });
     }
   }
 
   if (unlocked.length > 0) {
-    const partyMoraleHit = randomInt(4, 9) * unlocked.length;
-    state.morale -= partyMoraleHit;
-    const achievementLine = `Achievement unlocked: ${unlocked.join("; ")}. Mini party held. Crew morale dropped ${partyMoraleHit} points.`;
-    state.log.unshift(`Month ${state.month}: ${achievementLine}`);
-    state.report += ` ${achievementLine}`;
+    const unlockLines = unlocked.map((activity) => {
+      const scoreText = activity.lifestylePoints > 0 ? ` CEO lifestyle score +${activity.lifestylePoints}.` : "";
+      return `${activity.name}: ${activity.flavor}${scoreText}`;
+    });
+    for (const line of unlockLines) {
+      state.log.unshift(`Month ${state.month}: ${line}`);
+    }
+    return `Owners squeezed the turnip into the slush fund: $${squeezeAmount.toLocaleString()} diverted and allocated (${allocationSummary}). ${unlockLines.join(" ")}`;
   }
 
-  const allocationSummary = activities
-    .map((activity) => {
-      const ratio = fractions[activity.id] ?? 0;
-      return `${activity.name} ${(ratio * 100).toFixed(0)}%`;
-    })
-    .join(" | ");
-
-  return `Owners squeezed the turnip into the slush fund: $${TURNIP_SQUEEZE_AMOUNT.toLocaleString()} diverted and allocated (${allocationSummary}).`;
+  return `Owners squeezed the turnip into the slush fund: $${squeezeAmount.toLocaleString()} diverted and allocated (${allocationSummary}).`;
 }
 
 function customerStatusFromHealth(health) {
@@ -961,56 +1158,32 @@ function updateCustomerViability(state) {
   }
 }
 
-function applyMonthlyDrag(state) {
-  const interest = nextMonthDebtService(state);
-  const payroll = 180000 + Math.round((72 - state.morale) * 1700);
-  const dispatchOps = 120000;
-  const locomotiveLease = state.emergencyLeaseUnits * 65000;
-  state.cash -= interest + payroll + dispatchOps + locomotiveLease;
-
-  let branchCostTotal = 0;
-  let disruptionCosts = 0;
-  for (const branch of activeBranches(state)) {
-    const infraCost = sumCosts(branch.costs);
-    branchCostTotal += infraCost;
-
-    if ((branch.decayGraceMonths ?? 0) > 0) {
-      branch.decayGraceMonths -= 1;
-    } else {
-      const stagedDecay = stagedConditionDecay(branch.condition);
-      const wear = clamp(stagedDecay + state.monthlyWearModifier, 0, 8);
-      branch.condition -= wear;
-    }
-
-    if (branch.condition < 35 && Math.random() < 0.35) {
-      const incidentCost = randomInt(50000, 135000);
-      state.cash -= incidentCost;
-      disruptionCosts += incidentCost;
-      state.confidence -= randomInt(2, 6);
-      state.report += ` ${branch.name} suffered a track incident costing $${incidentCost.toLocaleString()}.`;
-    }
+function applyBranchMonthlyDrag(state, branch) {
+  const infraCost = sumCosts(branch.costs);
+  if ((branch.decayGraceMonths ?? 0) > 0) {
+    branch.decayGraceMonths -= 1;
+  } else {
+    const stagedDecay = stagedConditionDecay(branch.condition);
+    const wear = clamp(stagedDecay + state.monthlyWearModifier, 0, 8);
+    branch.condition -= wear;
   }
 
-  state.cash -= branchCostTotal;
-
-  if (state.morale < 35 && Math.random() < 0.4) {
-    const strikeLoss = randomInt(90000, 210000);
-    state.cash -= strikeLoss;
-    disruptionCosts += strikeLoss;
-    state.disruptionPenalty += 0.08;
-    state.report += ` Crew shortages delayed trains and burned $${strikeLoss.toLocaleString()} in extra costs.`;
+  let incidentCost = 0;
+  const incidentChance = state.safetyScrutinyMonths > 0 ? 0.22 : 0.35;
+  if (branch.condition < 35 && Math.random() < incidentChance) {
+    incidentCost = randomInt(50000, 135000);
+    state.cash -= incidentCost;
+    state.confidence -= randomInt(2, 6);
+    state.report += ` ${branch.name} suffered a track incident costing $${incidentCost.toLocaleString()}.`;
   }
 
-  const monthlyCapacityDecay =
-    1.7 + Math.max(0, state.disruptionPenalty) * 8 + Math.max(0, (70 - state.trackCondition) * 0.03);
-  state.serviceCapacity -= monthlyCapacityDecay;
+  return { infraCost, incidentCost };
+}
 
-  const operationalQuality = (state.trackCondition * 0.4 + state.morale * 0.32 + state.confidence * 0.28) / 100;
-  const networkBaseService = state.serviceCapacity / 100 * 0.72 + operationalQuality * 0.28;
-  const serviceFactor = clamp(networkBaseService - state.disruptionPenalty, 0.2, 1.05);
-
+function moveMarketLanes(state, serviceFactor) {
   let movedCars = 0;
   const movedByBranch = {};
+
   for (const lane of state.market.lanes) {
     if (lane.status === "Abandoned") {
       lane.movedCars = 0;
@@ -1032,7 +1205,7 @@ function applyMonthlyDrag(state) {
   }
 
   const capped = applyLocomotiveCapacityCap(state, movedByBranch, movedCars);
-  movedCars = capped.totalMoved;
+
   for (const lane of state.market.lanes) {
     if (lane.status === "Abandoned") {
       lane.movedCars = 0;
@@ -1041,7 +1214,51 @@ function applyMonthlyDrag(state) {
     lane.movedCars = capped.movedByBranch[lane.key] ?? 0;
   }
 
+  return capped;
+}
+
+function applyMonthlyDrag(state) {
+  const interest = nextMonthDebtService(state);
+  const unionPayrollMultiplier = state.unionized ? 1.12 : 1;
+  const payroll = Math.round((180000 + Math.round((72 - state.morale) * 1700)) * unionPayrollMultiplier);
+  const dispatchOps = 120000;
+  const locomotiveLease = state.emergencyLeaseUnits * 65000;
+  state.cash -= interest + payroll + dispatchOps + locomotiveLease;
+
+  let branchCostTotal = 0;
+  let disruptionCosts = 0;
+  for (const branch of activeBranches(state)) {
+    const branchMonthly = applyBranchMonthlyDrag(state, branch);
+    branchCostTotal += branchMonthly.infraCost;
+    disruptionCosts += branchMonthly.incidentCost;
+  }
+
+  state.cash -= branchCostTotal;
+
+  if (state.morale < 35 && Math.random() < 0.4) {
+    const strikeLoss = randomInt(90000, 210000);
+    state.cash -= strikeLoss;
+    disruptionCosts += strikeLoss;
+    state.disruptionPenalty += 0.08;
+    state.report += ` Crew shortages delayed trains and burned $${strikeLoss.toLocaleString()} in extra costs.`;
+  }
+
+  const monthlyCapacityDecay =
+    1.7 + Math.max(0, state.disruptionPenalty) * 8 + Math.max(0, (70 - state.trackCondition) * 0.03);
+  state.serviceCapacity -= monthlyCapacityDecay;
+
+  const operationalQuality = (state.trackCondition * 0.4 + state.morale * 0.32 + state.confidence * 0.28) / 100;
+  const networkBaseService = state.serviceCapacity / 100 * 0.72 + operationalQuality * 0.28;
+  const serviceFactor = clamp(networkBaseService - state.disruptionPenalty, 0.2, 1.05);
+
+  const capped = moveMarketLanes(state, serviceFactor);
+  const movedCars = capped.totalMoved;
+
   updateCustomerViability(state);
+  const employeeNotes = applyEmployeeConsequences(state, movedCars, serviceFactor);
+  for (const note of employeeNotes) {
+    state.report += ` ${note}`;
+  }
 
   const monthlyRate = state.pricePerCarload;
   let totalRevenue = 0;
@@ -1259,7 +1476,7 @@ export function createGame() {
     const notes = [actionSummary];
 
     if (options.squeezeTurnip) {
-      notes.push(applyTurnipSqueeze(state, options.turnipAllocation));
+      notes.push(applyTurnipSqueeze(state, options.turnipAllocation, options.turnipAmount));
     }
 
     state.pendingActionCashDelta = state.cash - cashBeforeAction;

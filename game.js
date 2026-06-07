@@ -14,7 +14,7 @@ const logEl = document.getElementById("log");
 const restartBtn = document.getElementById("restartBtn");
 const railroadNameEl = document.getElementById("railroadName");
 const currentMonthEl = document.getElementById("currentMonth");
-const turnipDefaultLabel = turnipBtn.textContent.trim();
+const turnipAmountInput = document.getElementById("turnip-amount");
 const turnipAllocationInputs = {
   yacht: document.getElementById("alloc-yacht"),
   "race-car": document.getElementById("alloc-race-car"),
@@ -25,6 +25,7 @@ const turnipAllocationInputs = {
 
 let turnipArmed = false;
 let turnipAllocation = null;
+let turnipAmount = 50000;
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -60,8 +61,38 @@ function readTurnipAllocationInputs() {
   return Object.fromEntries(ids.map((id, index) => [id, values[index] / total]));
 }
 
+function readTurnipAmountInput() {
+  const amount = Number(turnipAmountInput?.value);
+  if (!Number.isFinite(amount) || amount < 0) {
+    return null;
+  }
+
+  return Math.round(amount);
+}
+
+function formatTurnipButtonLabel() {
+  return "Arm Squeeze";
+}
+
+function lifestyleTitleForScore(score) {
+  if (score >= 120) {
+    return "Peak Corporate Hedonist";
+  }
+  if (score >= 80) {
+    return "Executive Indulgence";
+  }
+  if (score >= 40) {
+    return "Prestige with a Debt Problem";
+  }
+  if (score > 0) {
+    return "Trying Very Hard";
+  }
+  return "Barely Decorating the Office";
+}
+
 function renderSlushActivities(state) {
   const activities = state.slushActivities ?? [];
+  const lifestyleTitle = lifestyleTitleForScore(state.ceoLifestyleScore);
   const allocationText = turnipAllocation
     ? activities
         .map((activity) => `${activity.name}: ${Math.round((turnipAllocation[activity.id] ?? 0) * 100)}%`)
@@ -69,11 +100,13 @@ function renderSlushActivities(state) {
     : "No squeeze allocation set for this month.";
 
   slushActivitiesEl.innerHTML = `
+    <p class="slush-caption slush-score">CEO Lifestyle Score: ${state.ceoLifestyleScore} (${lifestyleTitle})</p>
     <p class="slush-caption">Slush Fund Allocation: ${allocationText}</p>
     <div class="slush-grid">
       ${activities
         .map((activity) => {
           const pct = Math.min(100, (activity.funded / activity.target) * 100);
+          const lifestylePoints = activity.lifestylePoints ?? 0;
           const achieved = activity.achieved
             ? `<span class="slush-badge">Achievement: Month ${monthLabel(activity.achievedMonth)}</span>`
             : "";
@@ -81,6 +114,7 @@ function renderSlushActivities(state) {
             <article class="slush-card ${activity.achieved ? "is-complete" : ""}">
               <h3>${activity.name}</h3>
               <p>$${activity.funded.toLocaleString()} / $${activity.target.toLocaleString()}</p>
+              <p class="slush-flavor">Lifestyle ${lifestylePoints > 0 ? `+${lifestylePoints}` : "+0"}: ${activity.unlockFlavor}</p>
               <div class="slush-bar">
                 <span style="width: ${pct.toFixed(1)}%"></span>
               </div>
@@ -120,6 +154,7 @@ function renderStats(state) {
           <td class="col-month">${monthLabel(row.month)}</td>
           <td class="col-cash ${statClass("cash", row.cash)}">$${row.cash.toLocaleString()}</td>
           <td class="col-slush">$${row.slushFund.toLocaleString()}</td>
+          <td class="col-lifestyle">${row.ceoLifestyleScore}</td>
           <td class="col-debt">$${row.debt.toLocaleString()}</td>
           <td class="col-debt-service">$${row.debtServiceNextMonth.toLocaleString()}</td>
           <td class="col-loan-rate">${row.loanRatePct.toFixed(2)}%</td>
@@ -320,9 +355,7 @@ function renderActions(state) {
   turnipBtn.disabled = state.gameOver;
   turnipBtn.classList.toggle("is-armed", turnipArmed && !state.gameOver);
   turnipBtn.setAttribute("aria-pressed", turnipArmed ? "true" : "false");
-  turnipBtn.textContent = turnipArmed
-    ? "ARMED: Add to Slush Fund (Squeeze the Turnip) with your next action"
-    : turnipDefaultLabel;
+  turnipBtn.textContent = turnipArmed ? "ARMED: Squeeze Armed" : formatTurnipButtonLabel();
 
   const actions = game.getActions();
   const branchGroups = new Map();
@@ -413,6 +446,7 @@ function capLedgerWrapByRows(tbodyEl, options = {}) {
 
   const targetRows = options.targetRows ?? 3;
   const groupSelector = options.groupSelector ?? null;
+  const extraSpace = options.extraSpace ?? 56;
   const rows = [...tbodyEl.querySelectorAll("tr")];
   if (rows.length === 0) {
     wrap.style.maxHeight = "";
@@ -439,7 +473,7 @@ function capLedgerWrapByRows(tbodyEl, options = {}) {
     }
   }
 
-  wrap.style.maxHeight = `${Math.ceil(headerHeight + bodyHeight + 2)}px`;
+  wrap.style.maxHeight = `${Math.ceil(headerHeight + bodyHeight + extraSpace)}px`;
 }
 
 function applyLedgerScrollCaps() {
@@ -471,6 +505,10 @@ function render() {
 restartBtn.addEventListener("click", () => {
   turnipArmed = false;
   turnipAllocation = null;
+  turnipAmount = 50000;
+  if (turnipAmountInput) {
+    turnipAmountInput.value = "50000";
+  }
   game.reset();
   render();
 });
@@ -487,15 +525,28 @@ turnipBtn.addEventListener("click", () => {
     return;
   }
 
+  const amount = readTurnipAmountInput();
+  if (amount === null) {
+    globalThis.alert("Squeeze amount must be zero or greater.");
+    return;
+  }
+
   const allocation = readTurnipAllocationInputs();
   if (!allocation) {
     globalThis.alert("Allocation percentages must be non-negative and add up to exactly 100.");
     return;
   }
 
+  turnipAmount = amount;
   turnipAllocation = allocation;
   turnipArmed = true;
   render();
+});
+
+turnipAmountInput?.addEventListener("input", () => {
+  if (!turnipArmed) {
+    render();
+  }
 });
 
 railroadNameEl.addEventListener("click", () => {
