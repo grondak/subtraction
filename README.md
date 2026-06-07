@@ -77,6 +77,11 @@ Site URL format:
 
 Because all assets are relative paths (`./game.js`, `./styles.css`), no base-path rewrite is required.
 
+## Fonts
+
+The site now self-hosts its typography using the OFL-licensed font files in `assets/fonts/`.
+The repo includes the corresponding license texts alongside the binaries.
+
 ## Change History
 
 ### 2026-06 Locomotive Capacity + Lease Action Gating
