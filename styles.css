@@ -83,7 +83,7 @@ body {
 
 .tagline {
   margin: 0;
-  max-width: 45ch;
+  max-width: 60ch;
   color: #f8d8b8;
 }
 
@@ -115,6 +115,42 @@ body {
   font-size: 0.78rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+}
+
+.scenario-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  color: #f8d8b8;
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.scenario-select {
+  min-width: 180px;
+  border: 1px solid rgba(248, 216, 184, 0.45);
+  border-radius: 10px;
+  padding: 7px 10px;
+  background: rgba(20, 17, 15, 0.46);
+  color: #fff8ed;
+  font: inherit;
+}
+
+.scenario-note {
+  margin: 8px 0 0;
+  color: #f8d8b8;
+  font-size: 0.78rem;
+  max-width: 52ch;
+}
+
+.scenario-description {
+  margin: 8px 0 0;
+  color: #f3cba5;
+  font-size: 0.82rem;
+  font-style: italic;
+  max-width: 56ch;
 }
 
 .panel {

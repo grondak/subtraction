@@ -15,9 +15,21 @@
       <header class="hero reveal">
         <p class="kicker">Regional Freight Mismanagement</p>
         <h1>Subtraction</h1>
-        <p class="tagline">Run a shortline railroad into the ground, one month at a time.</p>
+        <p class="tagline">Run a shortline railroad into the ground, one month at a&nbsp;time.</p>
         <p id="railroadName" class="railroad-name" aria-live="polite"></p>
         <p id="currentMonth" class="month-badge" aria-live="polite"></p>
+        <p class="scenario-note">Pick the scenario before your first turn. Once play starts, the choice locks for that run.</p>
+        <label class="scenario-row" for="scenarioSelect">
+          Scenario
+          <select id="scenarioSelect" class="scenario-select">
+            <option value="golden-parachute-quarter" selected>The Golden Parachute Quarter</option>
+            <option value="anti-victory-12">Anti-Victory 12</option>
+            <option value="anti-victory-24">Anti-Victory 24</option>
+            <option value="anti-victory-36">Anti-Victory 36</option>
+          </select>
+        </label>
+        <p id="scenarioBadge" class="month-badge" aria-live="polite"></p>
+        <p id="scenarioDescription" class="scenario-description" aria-live="polite"></p>
       </header>
 
       <section class="panel reveal delay-1">

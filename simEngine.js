@@ -81,6 +81,102 @@ const RAILROAD_RENAME_COST = 10000;
 const TURNIP_SQUEEZE_AMOUNT = 50000;
 const LOCOMOTIVE_BASE_CAR_CAPACITY = 980;
 const EMERGENCY_LOCO_CAR_BOOST = 220;
+const DEFAULT_SCENARIO_ID = "golden-parachute-quarter";
+
+const SCENARIO_PRESETS = {
+  "golden-parachute-quarter": {
+    id: "golden-parachute-quarter",
+    name: "The Golden Parachute Quarter",
+    description: "You have 6 months before a sale. Maximize personal extraction before buyer diligence reveals the corpse.",
+    victoryMonth: 6,
+    victoryLabel: "GOLDEN PARACHUTE QUARTER",
+    victoryNotice: "You made it to the sale window. The buyer saw enough to ask the right questions.",
+    startingCash: 3250000,
+    startingDebt: 1400000,
+    covenantCashLimit: -3250000,
+    startingServiceCapacity: 84,
+    startingTrackCondition: 78,
+    startingMorale: 72,
+    startingConfidence: 68,
+    startingPricePerCarload: 246,
+    startingLoanInterestRateMonthly: 0.0118,
+    monthlyCostMultiplier: 0.88,
+    lowTrafficCollapseMonths: 4,
+    fraShutdownThreshold: 6,
+    suppressLossConditions: true,
+    phases: [],
+  },
+  "anti-victory-12": {
+    id: "anti-victory-12",
+    name: "Anti-Victory 12",
+    description: "Play like you want this railroad to survive. The clock is already lying.",
+    victoryMonth: 12,
+    victoryLabel: "ANTI-VICTORY 12",
+    victoryNotice: "You lasted until turn 12. Anti-victory achieved.",
+    startingCash: 2450000,
+    startingDebt: 1200000,
+    covenantCashLimit: -2500000,
+    startingServiceCapacity: 80,
+    startingTrackCondition: 76,
+    startingMorale: 68,
+    startingConfidence: 64,
+    startingPricePerCarload: 240,
+    startingLoanInterestRateMonthly: 0.0125,
+    monthlyCostMultiplier: 1,
+    lowTrafficCollapseMonths: 2,
+    fraShutdownThreshold: 10,
+    suppressLossConditions: true,
+    phases: [],
+  },
+  "anti-victory-24": {
+    id: "anti-victory-24",
+    name: "Anti-Victory 24",
+    description: "Play like you want this railroad to survive. There is still time to make bad decisions look heroic.",
+    victoryMonth: 24,
+    victoryLabel: "ANTI-VICTORY 24",
+    victoryNotice: "You lasted until turn 24. Anti-victory achieved.",
+    startingCash: 4750000,
+    startingDebt: 900000,
+    covenantCashLimit: -4750000,
+    startingServiceCapacity: 86,
+    startingTrackCondition: 82,
+    startingMorale: 74,
+    startingConfidence: 70,
+    startingPricePerCarload: 252,
+    startingLoanInterestRateMonthly: 0.0115,
+    monthlyCostMultiplier: 0.72,
+    lowTrafficCollapseMonths: 12,
+    fraShutdownThreshold: 3,
+    suppressLossConditions: true,
+    phases: [],
+  },
+  "anti-victory-36": {
+    id: "anti-victory-36",
+    name: "Anti-Victory 36",
+    description: "Play like you want this railroad to survive. Rot is just patience with a budget.",
+    victoryMonth: 36,
+    victoryLabel: "ANTI-VICTORY 36",
+    victoryNotice: "You lasted until turn 36. Anti-victory achieved.",
+    startingCash: 9500000,
+    startingDebt: 650000,
+    covenantCashLimit: -9500000,
+    startingServiceCapacity: 92,
+    startingTrackCondition: 88,
+    startingMorale: 78,
+    startingConfidence: 76,
+    startingPricePerCarload: 264,
+    startingLoanInterestRateMonthly: 0.0105,
+    monthlyCostMultiplier: 0.5,
+    lowTrafficCollapseMonths: 18,
+    fraShutdownThreshold: -1,
+    suppressLossConditions: true,
+    phases: [],
+  },
+};
+
+function getScenarioPreset(scenarioId) {
+  return SCENARIO_PRESETS[scenarioId] ?? SCENARIO_PRESETS[DEFAULT_SCENARIO_ID];
+}
 
 const SLUSH_ACTIVITIES = [
   {
@@ -762,19 +858,38 @@ function emptyCostRow(month) {
   };
 }
 
-function baseState() {
+function applyScenarioTurnRules(state) {
+  const phases = state.scenario?.phases ?? [];
+  for (const phase of phases) {
+    if (typeof phase.apply !== "function") {
+      continue;
+    }
+    if (state.month < (phase.startMonth ?? 1)) {
+      continue;
+    }
+    if (phase.endMonth !== undefined && state.month > phase.endMonth) {
+      continue;
+    }
+    phase.apply(state);
+  }
+}
+
+function baseState(options = {}) {
+  const scenario = getScenarioPreset(options.scenarioId);
   const state = {
+    scenarioId: scenario.id,
+    scenario,
     month: 1,
     railroadName: pickRailroadName(),
-    cash: 2450000,
-    debt: 1200000,
+    cash: scenario.startingCash ?? 2450000,
+    debt: scenario.startingDebt ?? 1200000,
     carloads: 920,
-    serviceCapacity: 80,
-    trackCondition: 76,
-    morale: 68,
-    confidence: 64,
+    serviceCapacity: scenario.startingServiceCapacity ?? 80,
+    trackCondition: scenario.startingTrackCondition ?? 76,
+    morale: scenario.startingMorale ?? 68,
+    confidence: scenario.startingConfidence ?? 64,
     lineMiles: 58,
-    covenantCashLimit: -2500000,
+    covenantCashLimit: scenario.covenantCashLimit ?? -2500000,
     economyIndex: 2,
     monthsToEconomyShift: randomInt(4, 6),
     gameOver: false,
@@ -786,7 +901,7 @@ function baseState() {
     marketHistory: [],
     market: null,
     branches: createBranches(),
-    pricePerCarload: 240,
+    pricePerCarload: scenario.startingPricePerCarload ?? 240,
     disruptionPenalty: 0,
     monthlyWearModifier: 0,
     emergencyLeaseUnits: 0,
@@ -797,7 +912,7 @@ function baseState() {
     slushActivities: createSlushActivities(),
     unionized: false,
     safetyScrutinyMonths: 0,
-    loanInterestRateMonthly: 0.0125,
+    loanInterestRateMonthly: scenario.startingLoanInterestRateMonthly ?? 0.0125,
     currentMarketRateMonthly: 0.012,
     monthlyCosts: emptyCostRow(1),
     pendingActionCashDelta: 0,
@@ -1158,8 +1273,8 @@ function updateCustomerViability(state) {
   }
 }
 
-function applyBranchMonthlyDrag(state, branch) {
-  const infraCost = sumCosts(branch.costs);
+function applyBranchMonthlyDrag(state, branch, costMultiplier = 1) {
+  const infraCost = Math.round(sumCosts(branch.costs) * costMultiplier);
   if ((branch.decayGraceMonths ?? 0) > 0) {
     branch.decayGraceMonths -= 1;
   } else {
@@ -1171,7 +1286,7 @@ function applyBranchMonthlyDrag(state, branch) {
   let incidentCost = 0;
   const incidentChance = state.safetyScrutinyMonths > 0 ? 0.22 : 0.35;
   if (branch.condition < 35 && Math.random() < incidentChance) {
-    incidentCost = randomInt(50000, 135000);
+    incidentCost = Math.round(randomInt(50000, 135000) * costMultiplier);
     state.cash -= incidentCost;
     state.confidence -= randomInt(2, 6);
     state.report += ` ${branch.name} suffered a track incident costing $${incidentCost.toLocaleString()}.`;
@@ -1218,17 +1333,18 @@ function moveMarketLanes(state, serviceFactor) {
 }
 
 function applyMonthlyDrag(state) {
+  const costMultiplier = state.scenario?.monthlyCostMultiplier ?? 1;
   const interest = nextMonthDebtService(state);
   const unionPayrollMultiplier = state.unionized ? 1.12 : 1;
-  const payroll = Math.round((180000 + Math.round((72 - state.morale) * 1700)) * unionPayrollMultiplier);
-  const dispatchOps = 120000;
-  const locomotiveLease = state.emergencyLeaseUnits * 65000;
+  const payroll = Math.round((180000 + Math.round((72 - state.morale) * 1700)) * unionPayrollMultiplier * costMultiplier);
+  const dispatchOps = Math.round(120000 * costMultiplier);
+  const locomotiveLease = Math.round(state.emergencyLeaseUnits * 65000 * costMultiplier);
   state.cash -= interest + payroll + dispatchOps + locomotiveLease;
 
   let branchCostTotal = 0;
   let disruptionCosts = 0;
   for (const branch of activeBranches(state)) {
-    const branchMonthly = applyBranchMonthlyDrag(state, branch);
+    const branchMonthly = applyBranchMonthlyDrag(state, branch, costMultiplier);
     branchCostTotal += branchMonthly.infraCost;
     disruptionCosts += branchMonthly.incidentCost;
   }
@@ -1236,7 +1352,7 @@ function applyMonthlyDrag(state) {
   state.cash -= branchCostTotal;
 
   if (state.morale < 35 && Math.random() < 0.4) {
-    const strikeLoss = randomInt(90000, 210000);
+    const strikeLoss = Math.round(randomInt(90000, 210000) * costMultiplier);
     state.cash -= strikeLoss;
     disruptionCosts += strikeLoss;
     state.disruptionPenalty += 0.08;
@@ -1334,13 +1450,26 @@ function applyMonthlyDrag(state) {
 }
 
 function evaluateEnding(state) {
+  const scenario = state.scenario ?? getScenarioPreset(DEFAULT_SCENARIO_ID);
+
+  if (state.month >= (scenario.victoryMonth ?? Infinity)) {
+    state.gameOver = true;
+    state.result = scenario.victoryLabel ?? "ANTI-VICTORY";
+    return scenario.victoryNotice ?? "You lasted long enough. Anti-victory achieved.";
+  }
+
+  if (scenario.suppressLossConditions) {
+    return "";
+  }
+
   if (state.cash < state.covenantCashLimit) {
     state.gameOver = true;
     state.result = "Receivership";
     return `Cash fell below the covenant limit of $${state.covenantCashLimit.toLocaleString()} and lenders forced the railroad into receivership.`;
   }
 
-  if (state.trackCondition <= 10 && activeBranches(state).length > 0) {
+  const fraShutdownThreshold = state.scenario?.fraShutdownThreshold ?? 10;
+  if (state.trackCondition <= fraShutdownThreshold && activeBranches(state).length > 0) {
     state.gameOver = true;
     state.result = "FRA Shutdown";
     return "Track condition collapsed. Federal inspectors suspended operating authority.";
@@ -1354,6 +1483,7 @@ function evaluateEnding(state) {
 
   const activeCount = activeBranches(state).length;
   const lowTrafficFloor = activeCount <= 1 ? 170 : 110;
+  const lowTrafficLimit = state.scenario?.lowTrafficCollapseMonths ?? 2;
   if (state.carloads <= lowTrafficFloor) {
     state.lowTrafficMonths += 1;
   } else {
@@ -1361,19 +1491,13 @@ function evaluateEnding(state) {
   }
 
   if (state.lowTrafficMonths === 1) {
-    state.report += " Traffic Warning: 1 of 2 consecutive low-traffic months. Stabilize volume next month to avoid collapse.";
+    state.report += ` Traffic Warning: 1 of ${lowTrafficLimit} consecutive low-traffic months. Stabilize volume next month to avoid collapse.`;
   }
 
-  if (state.lowTrafficMonths >= 2) {
+  if (state.lowTrafficMonths >= lowTrafficLimit) {
     state.gameOver = true;
     state.result = "Traffic Collapse";
     return "Traffic stayed below sustainable levels for consecutive months and service economics collapsed.";
-  }
-
-  if (state.month > 24) {
-    state.gameOver = true;
-    state.result = "Barely Solvent";
-    return "You survived 24 months of strategic decline. The railroad still operates, somehow.";
   }
 
   return "";
@@ -1384,6 +1508,10 @@ function determineVerdict(state) {
 
   if (state.result === "Barely Solvent") {
     return extractionRatio >= 0.18 ? "Cowardly Solvency" : "Stewardship Failure";
+  }
+
+  if (state.result?.startsWith("ANTI-VICTORY")) {
+    return state.result;
   }
 
   if (state.result === "Receivership") {
@@ -1461,8 +1589,8 @@ function initializeWithBaselineMonth(state) {
   state.log = state.log.slice(0, 24);
 }
 
-export function createGame() {
-  let state = baseState();
+export function createGame(options = {}) {
+  let state = baseState(options);
   initializeWithBaselineMonth(state);
 
   function step(actionId, options = {}) {
@@ -1471,6 +1599,7 @@ export function createGame() {
     }
 
     const cashBeforeAction = state.cash;
+    applyScenarioTurnRules(state);
     const actionSummary = applyAction(state, actionId);
     clampQualityMetrics(state);
     const notes = [actionSummary];
@@ -1511,7 +1640,7 @@ export function createGame() {
   }
 
   function reset() {
-    state = baseState();
+    state = baseState({ scenarioId: state.scenarioId });
     initializeWithBaselineMonth(state);
     return state;
   }

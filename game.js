@@ -1,6 +1,8 @@
 import { createGame } from "./simEngine.js";
 
-const game = createGame();
+const scenarioSelectEl = document.getElementById("scenarioSelect");
+const scenarioBadgeEl = document.getElementById("scenarioBadge");
+const scenarioDescriptionEl = document.getElementById("scenarioDescription");
 
 const snapshotBodyEl = document.getElementById("snapshotBody");
 const costBodyEl = document.getElementById("costBody");
@@ -26,6 +28,9 @@ const turnipAllocationInputs = {
 let turnipArmed = false;
 let turnipAllocation = null;
 let turnipAmount = 50000;
+let selectedScenarioId = scenarioSelectEl?.value ?? "anti-victory-24";
+let game = createGame({ scenarioId: selectedScenarioId });
+let scenarioLocked = false;
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -39,6 +44,32 @@ function renderCurrentMonth(state) {
   currentMonthEl.textContent = state.gameOver
     ? `Final Month Reached: ${monthLabel(state.month)}`
     : `Current Month: ${monthLabel(state.month)}`;
+}
+
+function renderScenarioBadge(state) {
+  if (!scenarioBadgeEl) {
+    return;
+  }
+
+  const lockText = scenarioLocked ? "locked" : "choose before first turn";
+  scenarioBadgeEl.textContent = `${state.scenario?.name ?? "Scenario"} - survive to turn ${state.scenario?.victoryMonth ?? "?"} (${lockText})`;
+}
+
+function renderScenarioDescription(state) {
+  if (!scenarioDescriptionEl) {
+    return;
+  }
+
+  scenarioDescriptionEl.textContent = state.scenario?.description ?? "";
+}
+
+function syncScenarioSelector(state) {
+  if (!scenarioSelectEl) {
+    return;
+  }
+
+  scenarioSelectEl.value = state.scenarioId ?? selectedScenarioId;
+  scenarioSelectEl.disabled = scenarioLocked || state.gameOver;
 }
 
 function renderRailroadName(state) {
@@ -420,6 +451,7 @@ function createActionButton(action, disabled) {
   `;
 
   button.addEventListener("click", () => {
+    scenarioLocked = true;
     game.step(action.id, { squeezeTurnip: turnipArmed, turnipAllocation });
     turnipArmed = false;
     turnipAllocation = null;
@@ -495,6 +527,9 @@ function render() {
   renderLog(state);
   renderRailroadName(state);
   renderCurrentMonth(state);
+  renderScenarioBadge(state);
+  renderScenarioDescription(state);
+  syncScenarioSelector(state);
   applyLedgerScrollCaps();
 
   reportEl.textContent = state.gameOver
@@ -506,10 +541,11 @@ restartBtn.addEventListener("click", () => {
   turnipArmed = false;
   turnipAllocation = null;
   turnipAmount = 50000;
+  scenarioLocked = false;
   if (turnipAmountInput) {
     turnipAmountInput.value = "50000";
   }
-  game.reset();
+  game = createGame({ scenarioId: selectedScenarioId });
   render();
 });
 
@@ -547,6 +583,23 @@ turnipAmountInput?.addEventListener("input", () => {
   if (!turnipArmed) {
     render();
   }
+});
+
+scenarioSelectEl?.addEventListener("change", () => {
+  if (scenarioLocked) {
+    scenarioSelectEl.value = selectedScenarioId;
+    return;
+  }
+
+  selectedScenarioId = scenarioSelectEl.value;
+  turnipArmed = false;
+  turnipAllocation = null;
+  turnipAmount = 50000;
+  if (turnipAmountInput) {
+    turnipAmountInput.value = "50000";
+  }
+  game = createGame({ scenarioId: selectedScenarioId });
+  render();
 });
 
 railroadNameEl.addEventListener("click", () => {

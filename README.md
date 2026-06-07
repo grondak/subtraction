@@ -11,11 +11,13 @@ No build tools are required.
 3. Click one primary action each month.
 4. The slush fund action (if armed) applies in addition to your primary action.
 5. Slush allocation percentages must be non-negative and add up to exactly `100`.
-6. The game auto-runs a baseline month before your first decision so initial revenue and branch economics are visible.
-7. Watch the company snapshot table grow one row per month.
-8. First actionable turn starts in Month 2 after baseline seeding.
-9. Track Observe/Orient signals in the monthly market table: economy grade plus shipper and receiver lane pressure.
-10. Try to trigger one of the failure outcomes before month 25.
+6. Pick a scenario from the Scenario selector. The default run is `The Golden Parachute Quarter`, a six-month sale window focused on personal extraction before diligence.
+7. The remaining anti-victory scenarios survive to turn 12, 24, or 36 to trigger the end notice.
+8. The game auto-runs a baseline month before your first decision so initial revenue and branch economics are visible.
+9. Watch the company snapshot table grow one row per month.
+10. First actionable turn starts in Month 2 after baseline seeding.
+11. Track Observe/Orient signals in the monthly market table: economy grade plus shipper and receiver lane pressure.
+12. Try to trigger one of the failure outcomes before month 25.
 
 ## Game Model
 
@@ -38,6 +40,10 @@ No build tools are required.
 - The squeeze amount is user-entered and defaults to $50k; the button itself now lives inside the slush allocation panel.
 - Slush achievements trigger mini-party events at these thresholds: `Wild Party` ($10k), `Social Media-Fired Vacation Around the World` ($50k), `Three-Car Garage` ($100k), `Buy That Race Car` ($200k), and `Build That Yacht!` ($400k).
 - Luxury unlocks now add flavor text and CEO lifestyle score instead of a generic morale hit.
+- Three anti-victory scenarios are built in: survive to turn 12, 24, or 36 to trigger the stop notice.
+- `The Golden Parachute Quarter` is the default scenario. It gives you six months before a sale and leans harder into personal extraction than operational recovery.
+- The anti-victory scenarios remain available for 12, 24, and 36 turns if you want the longer target runs.
+- Scenario selection lives in the game header and resets the run when changed.
 - Jumbo loan controls include principal paydown and rate renegotiation to the current market rate.
 - Abandoning a branch removes service for that branch's shipper and receiver.
 - Lane pressure and moved cars are logged in row-per-month format.
@@ -101,6 +107,12 @@ The repo includes the corresponding license texts alongside the binaries.
 - Added employee-facing consequences for burnout, quits, sabotage, unionization, and safety whistleblowing.
 - Clarified the payroll model: crew payroll is morale-driven and separate from policy spend.
 - Renamed the market panel to `External Factors` everywhere in the game UI.
+
+### 2026-06 Anti-Victory Scenarios Update
+
+- Added three built-in anti-victory scenarios: survive to turn 12, 24, or 36.
+- Added a scenario selector in the game header so players can switch targets before starting a run.
+- Tuned the longer anti-victory scenarios with their own starting parameters and rule relaxations.
 
 ### 2026-06 Slush Fund + UX Update
 
