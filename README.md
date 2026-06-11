@@ -19,6 +19,13 @@ No build tools are required.
 11. Track Observe/Orient signals in the monthly market table: economy grade plus shipper and receiver lane pressure.
 12. Try to trigger one of the failure outcomes before month 25.
 
+## Scenario Presets
+
+- `The Golden Parachute Quarter` (default): survive to turn `6`. You have six months before a sale, so extraction pressure is high and time is short.
+- `Anti-Victory 12`: survive to turn `12`. Play like you want this railroad to survive; the clock is already lying.
+- `Anti-Victory 24`: survive to turn `24`. Longer runway with more room to make bad decisions look strategic.
+- `Anti-Victory 36`: survive to turn `36`. Longest runway, where slow rot becomes a management style.
+
 ## Game Model
 
 - Economy condition uses 5 grades (`Terrible`, `Soft`, `Tepid`, `Firm`, `Terrific`) and shifts every 4-6 months.
@@ -40,9 +47,7 @@ No build tools are required.
 - The squeeze amount is user-entered and defaults to $50k; the button itself now lives inside the slush allocation panel.
 - Slush achievements trigger mini-party events at these thresholds: `Wild Party` ($10k), `Social Media-Fired Vacation Around the World` ($50k), `Three-Car Garage` ($100k), `Buy That Race Car` ($200k), and `Build That Yacht!` ($400k).
 - Luxury unlocks now add flavor text and CEO lifestyle score instead of a generic morale hit.
-- Three anti-victory scenarios are built in: survive to turn 12, 24, or 36 to trigger the stop notice.
-- `The Golden Parachute Quarter` is the default scenario. It gives you six months before a sale and leans harder into personal extraction than operational recovery.
-- The anti-victory scenarios remain available for 12, 24, and 36 turns if you want the longer target runs.
+- Four built-in scenario presets are available: `The Golden Parachute Quarter` (turn 6 default), plus anti-victory targets at turns 12, 24, and 36.
 - Scenario selection lives in the game header and resets the run when changed.
 - Jumbo loan controls include principal paydown and rate renegotiation to the current market rate.
 - Abandoning a branch removes service for that branch's shipper and receiver.

@@ -452,7 +452,7 @@ function createActionButton(action, disabled) {
 
   button.addEventListener("click", () => {
     scenarioLocked = true;
-    game.step(action.id, { squeezeTurnip: turnipArmed, turnipAllocation });
+    game.step(action.id, { squeezeTurnip: turnipArmed, turnipAllocation, turnipAmount });
     turnipArmed = false;
     turnipAllocation = null;
     render();
